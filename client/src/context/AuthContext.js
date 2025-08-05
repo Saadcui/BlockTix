@@ -15,40 +15,48 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState();
   const [loading, setLoading] = useState(true);
- const signup = async (email, password, name, role) => {
+
+
+const signup = async (email, password, name, role) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-const res = await fetch('/api/users', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    firebase_uid: user.uid,
-    email,
-    name,
-    role
-  }),
-});
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firebase_uid: user.uid,
+        email,
+        name,
+        role
+      }),
+    });
 
-const text = await res.text();
-console.log('Raw response from /api/users:', text);
+      const text = await res.text();
+      console.log('Raw response from /api/users:', text);
 
-if (!res.ok) {
-  throw new Error('Failed to save user to database');
-}
-
-
-
+      if (!res.ok) {
+        throw new Error('Failed to save user to database');
+      }
     return { role };
-  };
+};
 
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
-  };
+const login = async (email, password) => {
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  const firebaseUID = userCredential.user.uid;
 
-  const logout = () => {
+  const res = await fetch(`/api/users/${firebaseUID}`);
+  const user = await res.json();
+
+  if (!res.ok) throw new Error('Failed to fetch user role');
+
+  return { role: user.role };
+};
+
+
+const logout = () => {
     return signOut(auth);
-  };
+ };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, user => {
