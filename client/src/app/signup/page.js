@@ -24,8 +24,8 @@ export default function SignupPage() {
         setError('Passwords do not match');
         return;
       }
-      const { role } = await signup(email, password, name, role);
-      router.push(`/dashboard/${role}`);
+      const { role:userRole } = await signup(email, password, name, role);
+      router.push(`/dashboard/${userRole}`);
 
     } catch (err) {
       console.error(err);
