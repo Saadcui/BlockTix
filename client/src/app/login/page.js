@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
 
@@ -37,6 +38,7 @@ export default function LoginPage() {
       <input className='input' type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
       <label className='label'>Password</label>
       <input className='input' type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+      <label className='text-sm'>Don't have an account? <Link href="/signup">Sign up</Link></label>
 
       <button type="submit" className='btn'>Log In</button>
     

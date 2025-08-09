@@ -168,8 +168,8 @@ export default function Navbar() {
           </div>
           {/* Right side - Sign In Button */}
           <div className="hidden md:block">
-            <Link 
-              href="/signin"
+            <Link
+              href="/login"
               style={{
                 backgroundColor: '#2563eb',
                 color: 'white',
@@ -406,8 +406,8 @@ export default function Navbar() {
             paddingTop: '16px',
             borderTop: '1px solid #e5e7eb'
           }}>
-            <Link 
-              href="/signin" 
+            <Link
+              href="/login"
               onClick={() => setIsMobileMenuOpen(false)}
               style={{
                 width: '100%',
