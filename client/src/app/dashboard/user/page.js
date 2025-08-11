@@ -1,7 +1,9 @@
 import React from 'react'
-
+import ProtectedRoute from "../../components/ProtectedRoute";
 export default function Dashboard() {
   return (
-    <div>User Dashboard</div>
+    <ProtectedRoute>
+      <div>User Dashboard</div>
+    </ProtectedRoute>
   )
 }

@@ -39,8 +39,8 @@ export default function SignupPage() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
     
-      <div className='w-[300px] h-[auto] mx-auto ' >
-      <label className='label font-bold'>Create An Account</label>
+      <div className='w-[400px] h-[auto] mx-auto ' >
+      <h2 className='font-bold mb-4'>Create An Account</h2>
       <div>
       <label className='label'>Full Name</label>
       <input className='input' type="text" placeholder="Name"  value={name}  onChange={e => setName(e.target.value)} required />
@@ -62,7 +62,7 @@ export default function SignupPage() {
       <label >Organizer</label>
       <input type='radio' value='organizer' checked={role === 'organizer'} onChange={e => setRole(e.target.value)} />
       </div>
-      <button type="submit" className='btn'>Create Account</button>
+      <button type="submit" className='btn w-[417px]'>Create Account</button>
       </div>
     </form>
   );

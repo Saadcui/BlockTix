@@ -33,15 +33,17 @@ export default function LoginPage() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <div className='w-[400px] h-[auto] px-5' >
-      <label className='label font-bold'>Login</label>
+      <h2 className='font-bold mb-4'>Login</h2>
       <label className='label'>Email</label>
       <input className='input' type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
       <label className='label'>Password</label>
       <input className='input' type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
       <label className='text-sm'>Don't have an account? <Link href="/signup">Sign up</Link></label>
 
-      <button type="submit" className='btn'>Log In</button>
-    
+      <button type="submit" className='btn w-[417px]'>Log In</button>
+
+
+
       </div>
     
     </form>
