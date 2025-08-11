@@ -14,7 +14,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="text-3xl sm:text-4xl font-extrabold tracking-tight text-black hover:text-gray-800 transition"
+            className="text-xl sm:text-2xl font-extrabold tracking-tight text-black hover:text-gray-800 transition no-underline"
           >
             BlockTix
           </Link>
@@ -23,14 +23,15 @@ export default function Navbar() {
           <div className="hidden md:flex gap-2">
             <Link href="/" className="link">Home</Link>
             <Link href="/discover" className="link">Discover</Link>
-            <Link href="/dashboard" className="link">Dashboard</Link>
-            <Link href="/my-tickets" className="link">My Tickets</Link>
+            <Link href="/dashboard/organizer" className="link">Dashboard</Link>
+            <Link href="/dashboard/user" className="link">My Tickets</Link>
           </div>
         </div>
 
-        {/* Right side: Sign In Button */}
+        {/* Right side: Log In Button */}
         <div className="hidden md:block">
-          <Link href="/signin" className="btn w-auto">Sign In</Link>
+          <Link href="/login" className="bg-white text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Sign In</Link>
+          <Link href="/signup" className="btn w-auto no-underline m-2">Sign Up</Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -58,9 +59,9 @@ export default function Navbar() {
           <div className="p-4 flex flex-col gap-2">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="link">Home</Link>
             <Link href="/discover" onClick={() => setIsMobileMenuOpen(false)} className="link">Discover</Link>
-            <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="link">Dashboard</Link>
-            <Link href="/my-tickets" onClick={() => setIsMobileMenuOpen(false)} className="link">My Tickets</Link>
-            <Link href="/signin" onClick={() => setIsMobileMenuOpen(false)} className="btn">Sign In</Link>
+            <Link href="/dashboard/organizer" onClick={() => setIsMobileMenuOpen(false)} className="link">Dashboard</Link>
+            <Link href="/dashboard/user" onClick={() => setIsMobileMenuOpen(false)} className="link">My Tickets</Link>
+            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="btn no-underline">Sign In</Link>
           </div>
         </div>
       )}

@@ -12,7 +12,18 @@
   }
 
   .link {
-    @apply text-gray-800 px-4 py-2 rounded-md font-semibold hover:bg-gray-100 hover:text-gray-900 transition;
-    text-decoration: none; /* Ensure no underline */
+    @apply text-gray-800 px-4 py-2 rounded-md font-semibold hover:bg-gray-100 hover:text-gray-900 transition no-underline;
+     
   }
+  
+  .label{
+    @apply  text-sm font-medium mx-2;
 
+  }
+  
+.input {
+  @apply border w-full p-2 rounded mb-2;
+}
+  
+
+}
