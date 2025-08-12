@@ -60,8 +60,8 @@ export default function OrganizerDashboard() {
 
 
   return (
-    <ProtectedRoute>
-      <h1>Create Event</h1>
+     <ProtectedRoute allowedRoles={["organizer"]}>
+      <h2 className='m-10'>Create Event</h2>
 
       <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center m-4'>
       <div className='w-[400px] flex flex-col gap-4'>

@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user , logout } = useAuth();
 
   return (
     <nav className="bg-white border-b sticky top-0 z-50 shadow-sm">
@@ -30,8 +32,17 @@ export default function Navbar() {
 
         {/* Right side: Log In Button */}
         <div className="hidden md:block">
+          { user ? (
+              <div>
+                <Link href="/profile" className="bg-white text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Profile</Link>
+                <button onClick={logout} className="btn w-auto no-underline m-2">Log Out</button>
+              </div>
+          ) : ( 
+          <>
           <Link href="/login" className="bg-white text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Sign In</Link>
           <Link href="/signup" className="btn w-auto no-underline m-2">Sign Up</Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}

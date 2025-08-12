@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login , logout} = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,9 +41,6 @@ export default function LoginPage() {
       <label className='text-sm'>Don't have an account? <Link href="/signup">Sign up</Link></label>
 
       <button type="submit" className='btn w-[417px]'>Log In</button>
-
-
-
       </div>
     
     </form>

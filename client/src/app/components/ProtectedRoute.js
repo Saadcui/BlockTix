@@ -2,21 +2,23 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext"; // or wherever your auth hook is
+import { useAuth } from "@/context/AuthContext"; 
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!user && !loading) {
-      router.push("/login");
+    if (!loading) {
+      if (!user) {
+        router.push("/login");
+      } else if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+        router.push("/");
+      }
     }
-  }, [user, router, loading]);
+  }, [user, loading, router, allowedRoles]);
 
-  if (!user && loading) {
-    return null; 
-  }
+  if (loading) return null; 
 
   return children;
 }

@@ -58,9 +58,26 @@ const logout = () => {
     return signOut(auth);
  };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      setCurrentUser(user);
+useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const res = await fetch(`/api/users/${firebaseUser.uid}`);
+          if (!res.ok) throw new Error("Failed to fetch role");
+
+          const userData = await res.json();
+
+          setCurrentUser({
+            ...firebaseUser,
+            role: userData.role,
+          });
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setCurrentUser(firebaseUser); 
+        }
+      } else {
+        setCurrentUser(null);
+      }
       setLoading(false);
     });
 
