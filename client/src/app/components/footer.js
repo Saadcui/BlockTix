@@ -20,8 +20,9 @@ function Footer() {
           <h2>Support</h2>
           <ul className='list-none'>
             <li><a href="/help" className='text-sm no-underline text-black hover:text-[#7C3AED] font-semibold'>Help Center</a></li>
-            <li><a href="/about" className='text-sm no-underline text-black hover:text-[#7C3AED] font-semibold' >Learn More</a></li>
             <li><a href="/faq" className='text-sm no-underline text-black hover:text-[#7C3AED] font-semibold'  >FAQ</a></li>
+            <li><a href="/contact" className='text-sm no-underline text-black hover:text-[#7C3AED] font-semibold' >Contact Us</a></li>
+
           </ul>
         </div>
       </div>

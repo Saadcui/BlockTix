@@ -16,7 +16,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="text-xl sm:text-2xl font-extrabold tracking-tight text-black hover:text-gray-800 transition no-underline"
+            className="text-xl sm:text-2xl font-extrabold tracking-tight text-black  transition no-underline"
           >
             BlockTix
           </Link>
