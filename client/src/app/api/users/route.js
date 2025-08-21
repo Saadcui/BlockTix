@@ -1,4 +1,6 @@
 // src/app/api/users/route.js
+
+//for signup
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';

@@ -25,7 +25,10 @@ export default function SignupPage() {
         return;
       }
       const { role:userRole } = await signup(email, password, name, role);
+
+    setTimeout(() => {
       router.push(`/dashboard/${userRole}`);
+    }, 1000);
 
     } catch (err) {
       console.error(err);

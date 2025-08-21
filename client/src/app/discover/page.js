@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
  * DiscoverPage Component
@@ -19,6 +20,7 @@ import { useState, useEffect } from 'react';
 export default function DiscoverPage() {
   // State for storing all events fetched from the database
   const [events, setEvents] = useState([]);
+  const router = useRouter();
 
   // State for storing the currently filtered list of events
   const [filteredEvents, setFilteredEvents] = useState([]);
@@ -30,14 +32,7 @@ export default function DiscoverPage() {
 
   // Predefined list of categories for the dropdown
   const categories = [
-    'All',
-    'Music',
-    'Sports',
-    'Concert',
-    'Conference',
-    'Workshop',
-    'Theater',
-    'Comedy',
+   "Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"
   ];
 
   /**
@@ -177,7 +172,10 @@ export default function DiscoverPage() {
             {filteredEvents.map((event) => (
               <div
                 key={event._id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden"
+                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
+                onClick={() => {
+                  router.push(`/event/${event.eventId}`)
+                }}
               >
                 {/* Event Image Placeholder */}
                 <div className="h-40 bg-gradient-to-br from-purple-100 to-gray-100 flex items-center justify-center">
