@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+import { useAuth } from '@/context/AuthContext';
 
 import { useParams } from 'next/navigation';
 
@@ -11,6 +12,39 @@ function Event() {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useAuth();
+
+
+  async function handleBuyTicket() {
+  try {
+    const res = await fetch("/api/tickets", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        eventId: event._id,  
+        userId: user.uid 
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Something went wrong");
+      return;
+    }
+
+    alert("Ticket purchased successfully!");
+    setEvent(prev => ({
+      ...prev,
+      remainingTickets: prev.remainingTickets - 1
+    }));
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
 
   useEffect(() => {
     async function fetchEvent() {
@@ -35,7 +69,6 @@ function Event() {
   return (
     <>
     <div  className="w-full h-[400px] bg-cover flex justify-between" style={{ backgroundImage: `url(${event.image})` } }>
-    <div className="absolute inset-0 bg-gradient-to-t from-white/70 to-transparent"></div>
 
       <div className='flex flex-col justify-end p-12 box-border'>
       <h1 >{event.event}</h1>
@@ -54,9 +87,10 @@ function Event() {
 
     <div className='w-[300px] border border-gray-100'>
       <h2>Get Tickets</h2>
-      <div className='flex flex-col justify-end'>
-      {event.price}
-      <button className='btn w-[200px]'>Buy ticket</button>
+      <div className='flex flex-col box-border'>
+        <p className='m-2'>price : {event.price}</p>
+        <p className='m-2'>ticket: {event.totalTickets}</p>
+      <button className='btn w-[200px] m-2' onClick={handleBuyTicket} >Buy ticket</button>
       </div>
     </div>
 

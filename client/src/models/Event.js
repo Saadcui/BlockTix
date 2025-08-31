@@ -40,6 +40,11 @@ const eventSchema = new mongoose.Schema({
     required: true,
     min: 1
   },
+  remainingTickets: {
+    type: Number,
+    required: true,
+    min: 0
+  },
   image: {
     type: String,
     default: ""
@@ -54,5 +59,6 @@ const eventSchema = new mongoose.Schema({
     required: true
   }
 }, { timestamps: true });
+
 
 export default mongoose.models.Event || mongoose.model("Event", eventSchema);

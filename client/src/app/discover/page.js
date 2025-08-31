@@ -32,7 +32,7 @@ export default function DiscoverPage() {
 
   // Predefined list of categories for the dropdown
   const categories = [
-   "Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"
+   "All", "Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"
   ];
 
   /**

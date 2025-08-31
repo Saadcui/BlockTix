@@ -19,6 +19,7 @@ export async function POST(req) {
         category,
         price,
         totalTickets,
+        remainingTickets: totalTickets,
         image,
         organizerId
         });
