@@ -52,7 +52,7 @@ export async function GET(req) {
     }
 
     const tickets = await Ticket.find({ userId })
-      .populate("eventId", "event date time location price image") 
+      .populate("eventId", "event date time location price image remainingTickets") 
       .sort({ createdAt: -1 }); 
 
     return NextResponse.json({ tickets }, { status: 200 });

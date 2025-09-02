@@ -9,9 +9,9 @@ export default function Dashboard() {
   const { user} = useAuth();
 
   useEffect(() => {
+      if (!user) return;
     const fetchTickets = async () => {
       try {
-        if (!user) return;
         const res = await fetch(`/api/tickets?userId=${user.uid}`); 
         const data = await res.json();
         setTickets(data.tickets);
@@ -23,7 +23,7 @@ export default function Dashboard() {
     };
 
     fetchTickets();
-  }, [ [user]]);
+  }, [user]);
 
   function Ticket({ ticket }) {
   

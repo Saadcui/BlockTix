@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect , useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext"; 
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -14,11 +15,15 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
         router.push("/login");
       } else if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
         router.push("/");
+      } else {
+        setAuthorized(true);
       }
     }
   }, [user, loading, router, allowedRoles]);
 
-  if (loading) return null; 
+   if (loading || !authorized) {
+    return null; 
+  } 
 
   return children;
 }
