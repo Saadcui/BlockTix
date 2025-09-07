@@ -5,6 +5,7 @@ import { FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import { useAuth } from '@/context/AuthContext';
 
 import { useParams } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 function Event() {
   const params = useParams();
@@ -16,6 +17,11 @@ function Event() {
 
 
   async function handleBuyTicket() {
+
+  if(!user){
+    toast.error('Login to buy tickets', { duration: 4000 });
+    return;
+  }
   try {
     const res = await fetch("/api/tickets", {
       method: "POST",

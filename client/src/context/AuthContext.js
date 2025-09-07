@@ -32,13 +32,13 @@ const signup = async (email, password, name, role) => {
       }),
     });
 
-      const text = await res.text();
-      console.log('Raw response from /api/users:', text);
+      const data = await res.json();
+      console.log('Raw response from /api/users:', data);
 
       if (!res.ok) {
         throw new Error('Failed to save user to database');
       }
-    return { role };
+    return { role: data.role };
 };
 
 const login = async (email, password) => {

@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup } = useAuth();  
+  const { signup , user } = useAuth();  
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,17 +25,13 @@ export default function SignupPage() {
         return;
       }
       const { role:userRole } = await signup(email, password, name, role);
-
-    setTimeout(() => {
       router.push(`/dashboard/${userRole}`);
-    }, 1000);
 
     } catch (err) {
       console.error(err);
       setError(err.message);
     }
   };
-
   return (
     <form onSubmit={handleSignup} className="flex flex-col items-center justify-center min-h-screen" >
       
