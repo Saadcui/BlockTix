@@ -5,6 +5,7 @@ import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
 } from "firebase/auth";
 
@@ -53,6 +54,10 @@ const login = async (email, password) => {
   return { role: user.role };
 };
 
+const resetPassword = (email) => {
+  return sendPasswordResetEmail(auth, email);
+};
+
 
 const logout = () => {
     return signOut(auth);
@@ -85,7 +90,7 @@ useEffect(() => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user: currentUser, signup, login, logout }}>
+    <AuthContext.Provider value={{ user: currentUser, signup, login, logout,resetPassword }}>
       {!loading && children}
     </AuthContext.Provider>
   );

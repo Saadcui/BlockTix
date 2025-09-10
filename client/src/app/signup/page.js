@@ -18,6 +18,11 @@ export default function SignupPage() {
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    
+     if (!validateEmail(email)) {
+    setError('Please enter a valid email address');
+    return;
+  }
 
     try {
       if (password !== checkPassword) {
@@ -32,6 +37,11 @@ export default function SignupPage() {
       setError(err.message);
     }
   };
+
+    const validateEmail = (email) => {
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return regex.test(email);
+    };
   return (
     <form onSubmit={handleSignup} className="flex flex-col items-center justify-center min-h-screen" >
       

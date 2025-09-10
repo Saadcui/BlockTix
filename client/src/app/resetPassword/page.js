@@ -6,50 +6,49 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
 
-export default function LoginPage() {
+export default function ResetPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { resetPassword } = useAuth();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleLogin = async (e) => {
+
+  const handleReset = async (e) => {
     e.preventDefault();
     setError('');
+    
      if (!validateEmail(email)) {
     setError('Please enter a valid email address');
     return;
   }
 
     try {
-      const { role } = await login(email, password);
-      router.push(`/dashboard/${role}`);
-
+      setMessage('');
+      await resetPassword(email);
+      setMessage('Password reset email sent successfully');
     } catch (err) {
       console.error(err);
-      setError("Account not found!");
+      setError("Failed to send password reset email");
     }
   };
   const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
   return (
-    <form onSubmit={handleLogin} className='flex flex-col items-center justify-center min-h-screen' >
+    <form onSubmit={handleReset} className='flex flex-col items-center justify-center min-h-screen' >
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <div className='w-[400px] h-[auto] px-5' >
-      <h2 className='font-bold mb-4'>Login</h2>
+      <h2 className='font-bold mb-4'>Reset Password</h2>
       <label className='label'>Email</label>
       <input className='input' type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-      <label className='label'>Password</label>
-      <input className='input' type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
       <label className='text-sm'>Don't have an account? <Link href="/signup">Sign up</Link></label>
-      <br />
-      <label className='text-sm color-[#7C3AED]'><Link href="/resetPassword">Forgot Password?</Link></label>
 
-      <button type="submit" className='btn w-[417px]'>Log In</button>
+      <button type="submit" className='btn w-[417px]'>Reset Password</button>
       </div>
     
     </form>
