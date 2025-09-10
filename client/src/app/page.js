@@ -24,7 +24,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      try {
+      try { 
         const res = await fetch('/api/events');
         const data = await res.json();
         if (data.success) {
@@ -49,7 +49,7 @@ export default function Home() {
     toast.error('Only organizers can create events', { duration: 4000 });
     return;
   }
-  router.push('/create-event');
+  router.push('/dashboard/organizer');
  }
 
   return (
