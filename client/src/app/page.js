@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext'
 import toast from 'react-hot-toast';
+import { set } from 'mongoose';
 
 
 
@@ -14,13 +15,19 @@ export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const searchInput = React.useRef('');
+  const [searchInput, setSearchInput] = useState('');
+  const [filteredEvents, setFilteredEvents] = useState([]);
+
+  useEffect(() => {
+    setFilteredEvents([]);
+    events.filter(event => {
+      if(event.event.toLowerCase().includes(searchInput.toLowerCase())){
+        setFilteredEvents(prev => [...prev, event])
+      }
+    })
+  },[searchInput])
 
 
-  const handleSearch = () => {
-    const query = searchInput.current.value;
-    events.filter(event => event.name.toLowerCase().includes(query.toLowerCase()));
-  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -57,12 +64,34 @@ export default function Home() {
       <div className='flex flex-col items-center justify-center min-h-screen shadow-xl'>
       <h1 className='sm:text-6xl font-bold m-0 w-3/4 text-center'>Discover and attend events with <span className='text-[#7C3AED]'>blockchain security</span></h1>
       <p className='text-xl text-gray-500 w-1/2 text-center'>Find and purchase tickets for the best events near you, secured by blockchain technology to prevent fraud and ensure authenticity.</p>
-      <input type="text" placeholder="Search for events..." className='border border-gray-300 p-2 rounded-3xl m-2 sm:w-80' ref={searchInput} />
+      
+    
+      <div className='relative'>
+      <input type="text" placeholder="Search for events..." className='border border-gray-300 p-2 rounded-2xl m-2 sm:w-80' onChange={(e) => setSearchInput(e.target.value)} />
+      {searchInput && (
+        <div className='absolute rounded-md w-80 max-h-60 overflow-y-auto z-10 bg-white shadow-md pl-2 ml-4 mt-2' style={{border: '1px solid #ccc'}}>
+          {
+              filteredEvents.length > 0 ? (filteredEvents.map(event =>(
+              <div key={event._id} onClick={() => router.push(`/event/${event.eventId}`)}>
+
+                <p>{event.event}</p>
+              </div>))
+            ):(<p>No events found</p>)
+          }
+        </div>
+      )}
+      </div>
+
+
       <div>
       <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md w-32' onClick={() => router.push('/discover')}>Explore</button>
       <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md m-2 w-32' onClick={handleClick}>Create Event</button>
       </div>
+
+
       </div>
+
+      
 
       <div className='flex flex-col min-h-screen  p-8 m-4'>
         <h2 className='text-4xl font-bold m-0'>Upcoming Events</h2>

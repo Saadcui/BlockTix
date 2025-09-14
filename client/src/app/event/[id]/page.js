@@ -96,6 +96,8 @@ function Event() {
       <div className='flex flex-col box-border'>
         <p className='m-2'>price : {event.price}</p>
         <p className='m-2'>ticket: {event.totalTickets}</p>
+        <p className='m-2'>Remaining ticket: {event.remainingTickets}</p>
+
       <button className='btn w-[200px] m-2' onClick={handleBuyTicket} >Buy ticket</button>
       </div>
     </div>
