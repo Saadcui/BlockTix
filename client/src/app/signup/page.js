@@ -14,6 +14,8 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [role, setRole] = useState('user');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ export default function SignupPage() {
     setError('Please enter a valid email address');
     return;
   }
-
+    setLoading(true);
     try {
       if (password !== checkPassword) {
         setError('Passwords do not match');
@@ -35,6 +37,7 @@ export default function SignupPage() {
     } catch (err) {
       console.error(err);
       setError(err.message);
+      setLoading(false);
     }
   };
 
@@ -71,7 +74,7 @@ export default function SignupPage() {
       <label >Organizer</label>
       <input type='radio' value='organizer' checked={role === 'organizer'} onChange={e => setRole(e.target.value)} />
       </div>
-      <button type="submit" className='btn w-[417px]'>Create Account</button>
+      <button type="submit" className='btn w-[417px]' disabled={loading} style={{ opacity: loading ? 0.75 : 1 }}>Create Account</button>
       </div>
     </form>
   );

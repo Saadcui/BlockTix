@@ -8,7 +8,7 @@ export default function Navbar() {
   const { user , logout } = useAuth();
 
   return (
-    <nav className="bg-white border-b sticky top-0 z-50 shadow-sm">
+<nav className="bg-white/10 backdrop-blur-md border-b sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
         
         {/* Left side: Logo + Links */}
@@ -34,12 +34,12 @@ export default function Navbar() {
         <div className="hidden md:block">
           { user ? (
               <div>
-                <Link href="/profile" className="bg-white text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Profile</Link>
+                <Link href="/profile" className="bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Profile</Link>
                 <button onClick={logout} className="btn w-auto no-underline m-2">Log Out</button>
               </div>
           ) : ( 
           <>
-          <Link href="/login" className="bg-white text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Sign In</Link>
+          <Link href="/login" className="bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Sign In</Link>
           <Link href="/signup" className="btn w-auto no-underline m-2">Sign Up</Link>
             </>
           )}

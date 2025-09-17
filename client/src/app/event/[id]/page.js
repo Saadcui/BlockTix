@@ -37,17 +37,17 @@ function Event() {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.error || "Something went wrong");
+      toast.error(data.error || "Something went wrong");
       return;
     }
 
-    alert("Ticket purchased successfully!");
+    toast.success("Ticket purchased successfully!");
     setEvent(prev => ({
       ...prev,
       remainingTickets: prev.remainingTickets - 1
     }));
   } catch (err) {
-    alert("Error: " + err.message);
+    toast.error("Error: " + err.message);
   }
 }
 

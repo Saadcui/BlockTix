@@ -92,7 +92,7 @@ export default function DiscoverPage() {
   }, [search, category, location, events]);
 
   return (
-    <main className="min-h-screen bg-gray-50 px-6 py-8">
+    <main className="min-h-screen px-6 py-8">
       {/* Page Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Discover Events</h1>
@@ -102,7 +102,7 @@ export default function DiscoverPage() {
       </div>
 
       {/* Filter Section */}
-      <div className="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md mb-8 border">
+      <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 border">
         <h2 className="text-xl font-semibold mb-6 text-gray-800">Filter Events</h2>
 
         {/* Filter Inputs Grid */}
@@ -172,7 +172,7 @@ export default function DiscoverPage() {
             {filteredEvents.map((event) => (
               <div
                 key={event._id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
+                className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
                 onClick={() => {
                   router.push(`/event/${event.eventId}`)
                 }}

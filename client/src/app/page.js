@@ -4,16 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext'
 import toast from 'react-hot-toast';
-import { set } from 'mongoose';
-
-
 
 
 export default function Home() {
 
   const [events, setEvents] = useState([]);
   const router = useRouter();
+  
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
 
   const [searchInput, setSearchInput] = useState('');
   const [filteredEvents, setFilteredEvents] = useState([]);
@@ -31,6 +30,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchEvents = async () => {
+      setLoading(true);
       try { 
         const res = await fetch('/api/events');
         const data = await res.json();
@@ -39,6 +39,8 @@ export default function Home() {
         }
       } catch (error) {
         console.error('Failed to fetch events:', error);
+      }finally {
+        setLoading(false);
       }
     };
 
@@ -60,7 +62,7 @@ export default function Home() {
  }
 
   return (
-    <div >
+    <div>
       <div className='flex flex-col items-center justify-center min-h-screen shadow-xl'>
       <h1 className='sm:text-6xl font-bold m-0 w-3/4 text-center'>Discover and attend events with <span className='text-[#7C3AED]'>blockchain security</span></h1>
       <p className='text-xl text-gray-500 w-1/2 text-center'>Find and purchase tickets for the best events near you, secured by blockchain technology to prevent fraud and ensure authenticity.</p>
@@ -84,8 +86,8 @@ export default function Home() {
 
 
       <div>
-      <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md w-32' onClick={() => router.push('/discover')}>Explore</button>
-      <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md m-2 w-32' onClick={handleClick}>Create Event</button>
+      <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md w-32 cursor-pointer' onClick={() => router.push('/discover')}>Explore</button>
+      <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md m-2 w-32 cursor-pointer' onClick={handleClick}>Create Event</button>
       </div>
 
 
@@ -93,18 +95,18 @@ export default function Home() {
 
       
 
-      <div className='flex flex-col min-h-screen  p-8 m-4'>
+      <div className='flex flex-col min-h-screen  p-8  shadow-xl m-0'>
         <h2 className='text-4xl font-bold m-0'>Upcoming Events</h2>
         <div className='flex flex-row justify-between'>
         <p className='text-gray-500 ml-4'>Discover the hottest events happening soon</p>
-        <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md m-2 w-32' onClick={() => router.push('/discover')}>View All</button>
+        <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md m-2 w-32 cursor-pointer' onClick={() => router.push('/discover')}>View All</button>
         </div>
 
         <div className='flex flex-row flex-wrap gap-6 max-h-96 overflow-y-auto m-10 justify-center'>
          {events.map(event => ( 
            <div
                 key={event._id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer w-80"
+                className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer w-80"
                 onClick={() => {
                   router.push(`/event/${event.eventId}`)
                 }}
