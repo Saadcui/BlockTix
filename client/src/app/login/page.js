@@ -39,7 +39,7 @@ export default function LoginPage() {
     <form onSubmit={handleLogin} className='flex flex-col items-center justify-center min-h-screen' >
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
-      <div className='w-[400px] h-[auto] px-5' >
+      <div className='w-[400px] h-[auto] bg-white/20 backdrop-blur-md p-10 rounded-lg' >
       <h2 className='font-bold mb-4'>Login</h2>
       <label className='label'>Email</label>
       <input className='input' type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />

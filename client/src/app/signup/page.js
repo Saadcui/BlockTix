@@ -51,7 +51,7 @@ export default function SignupPage() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
     
-      <div className='w-[400px] h-[auto] mx-auto ' >
+      <div className='w-[400px] h-[auto] mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg ' >
       <h2 className='font-bold mb-4'>Create An Account</h2>
       <div>
       <label className='label'>Full Name</label>

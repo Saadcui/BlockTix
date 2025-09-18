@@ -2,7 +2,7 @@ import React from 'react'
 
 function Footer() {
   return (
-    <footer>
+    <footer  className="bg-white/20 backdrop-blur-md">
       <div className='flex flex-col sm:flex-row  flex-wrap  justify-between p-5'>
         <div className='flex-1'>
           <h2>BlockTix</h2>

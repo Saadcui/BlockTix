@@ -164,7 +164,7 @@ export default function DiscoverPage() {
       </div>
 
       {/* Events Grid */}
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg">
         {filteredEvents.length === 0 ? (
           <p className="text-center text-gray-500 text-lg">No events match your filters.</p>
         ) : (

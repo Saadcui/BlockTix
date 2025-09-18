@@ -1,9 +1,10 @@
 'use client'
-import React from 'react'
+import React, { use } from 'react'
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext'
 import toast from 'react-hot-toast';
+import { set } from 'mongoose';
 
 
 export default function Home() {
@@ -16,7 +17,10 @@ export default function Home() {
 
   const [searchInput, setSearchInput] = useState('');
   const [filteredEvents, setFilteredEvents] = useState([]);
-
+    const [show, setShow] = useState(false);
+  useEffect(() => {
+    setShow(true);
+  }, [])
   useEffect(() => {
     setFilteredEvents([]);
     events.filter(event => {
@@ -64,7 +68,11 @@ export default function Home() {
   return (
     <div>
       <div className='flex flex-col items-center justify-center min-h-screen shadow-xl'>
-      <h1 className='sm:text-6xl font-bold m-0 w-3/4 text-center'>Discover and attend events with <span className='text-[#7C3AED]'>blockchain security</span></h1>
+      <h1 className='sm:text-6xl font-bold m-0 w-3/4 text-center'>Discover and attend events with       <span
+        className={`text-[#7C3AED] inline-block transition-opacity transition-transform duration-700 ease-out ${
+          show ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
+        }`}
+      >blockchain security</span></h1>
       <p className='text-xl text-gray-500 w-1/2 text-center'>Find and purchase tickets for the best events near you, secured by blockchain technology to prevent fraud and ensure authenticity.</p>
       
     
@@ -102,7 +110,7 @@ export default function Home() {
         <button className='bg-[#7C3AED] text-white py-2 px-4 rounded-md m-2 w-32 cursor-pointer' onClick={() => router.push('/discover')}>View All</button>
         </div>
 
-        <div className='flex flex-row flex-wrap gap-6 max-h-96 overflow-y-auto m-10 justify-center'>
+        <div className='flex flex-row flex-wrap gap-6 max-h-96 overflow-y-auto m-10 justify-center bg-white/20 backdrop-blur-md p-10 rounded-lg'>
          {events.map(event => ( 
            <div
                 key={event._id}
