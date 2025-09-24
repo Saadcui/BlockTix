@@ -37,17 +37,17 @@ export default function LoginPage() {
   };
   return (
     <form onSubmit={handleLogin} className='flex flex-col items-center justify-center min-h-screen' >
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>}
 
-      <div className='w-[400px] h-[auto] bg-white/20 backdrop-blur-md p-10 rounded-lg' >
-      <h2 className='font-bold mb-4'>Login</h2>
+      <div className='w-[400px] h-[auto] card p-10' >
+      <h2 className='font-bold mb-4 text-gray-900 dark:text-gray-100 text-2xl'>Login</h2>
       <label className='label'>Email</label>
       <input className='input' type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
       <label className='label'>Password</label>
       <input className='input' type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-      <label className='text-sm'>Don't have an account? <Link href="/signup">Sign up</Link></label>
+      <label className='text-sm text-gray-600 dark:text-gray-400'>Don't have an account? <Link href="/signup" className="text-primary-500 dark:text-purple-400 hover:underline">Sign up</Link></label>
       <br />
-      <label className='text-sm color-[#7C3AED]'><Link href="/resetPassword">Forgot Password?</Link></label>
+      <label className='text-sm text-primary-500 dark:text-purple-400'><Link href="/resetPassword" className="hover:underline">Forgot Password?</Link></label>
 
       <button type="submit" className='btn w-[417px]'>Log In</button>
       </div>
