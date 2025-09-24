@@ -64,7 +64,7 @@ export default function OrganizerDashboard() {
       <h2 className='m-10'>Create Event</h2>
 
       <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center m-4'>
-      <div className='w-[400px] flex flex-col gap-4'>
+      <div className='w-[400px] flex flex-col gap-4 bg-white/10 backdrop:blur-md p-8 rounded-lg'>
         <div>
           <label htmlFor="event" className='label'>Event Name:</label>
           <input type="text" name="event" placeholder="Event Name" required className='input' onChange={(e) => setEvent(e.target.value)}/>

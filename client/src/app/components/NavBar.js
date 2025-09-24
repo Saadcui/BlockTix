@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user , logout } = useAuth();
-
   return (
 <nav className="bg-white/10 backdrop-blur-md border-b sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
@@ -34,7 +33,7 @@ export default function Navbar() {
         <div className="hidden md:block">
           { user ? (
               <div>
-                <Link href="/profile" className="bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Profile</Link>
+                <Link href={`/profile/${user.role}`} className="bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline" >Profile</Link>
                 <button onClick={logout} className="btn w-auto no-underline m-2">Log Out</button>
               </div>
           ) : ( 
@@ -72,7 +71,17 @@ export default function Navbar() {
             <Link href="/discover" onClick={() => setIsMobileMenuOpen(false)} className="link">Discover</Link>
             <Link href="/dashboard/organizer" onClick={() => setIsMobileMenuOpen(false)} className="link">Dashboard</Link>
             <Link href="/dashboard/user" onClick={() => setIsMobileMenuOpen(false)} className="link">My Tickets</Link>
-            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="btn no-underline">Sign In</Link>
+            {user ? (
+              <>
+                <Link href={`/profile/${user.role}`} onClick={() => setIsMobileMenuOpen(false)} className="btn no-underline">Profile</Link>
+                <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="btn no-underline">Log Out</button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="btn no-underline">Sign In</Link>
+                <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)} className="btn no-underline">Sign Up</Link>
+              </>
+            )}
           </div>
         </div>
       )}
