@@ -6,47 +6,28 @@
   * {
     font-family: 'Inter', sans-serif;
   }
-  
-  html, body {
-    margin: 0;
-    padding: 0;
-    @apply text-gray-900 dark:text-gray-100 transition-colors duration-300;
-  }
-  
-  /* Dark mode overlay to darken the background image */
-  html.dark body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(17, 24, 39, 0.7);
-    z-index: -1;
-    pointer-events: none;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+}
 
   .btn {
-    @apply bg-primary-500 text-white font-bold py-2 px-4 rounded my-2 w-full hover:bg-primary-600 transition-colors duration-300;
+    @apply bg-[#7C3AED] text-white font-bold py-2 px-4 rounded my-2 w-full hover:bg-[#6D28D9] transition;
   }
 
   .link {
-    @apply text-gray-800 dark:text-gray-200 px-4 py-2 rounded-md font-semibold hover:text-primary-500 dark:hover:text-purple-400 transition-colors duration-300 no-underline;
+    @apply text-gray-800 px-4 py-2 rounded-md font-semibold  hover:text-[#7C3AED] transition no-underline;
+     
   }
   
-  .label {
-    @apply text-sm font-medium mx-2 text-gray-700 dark:text-gray-300;
+  .label{
+    @apply  text-sm font-medium mx-2;
+
   }
   
-  .input {
-    @apply border border-gray-300 dark:border-gray-600 w-full p-2 rounded mb-2 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:border-primary-500 dark:focus:border-purple-400 focus:outline-none transition-colors duration-300;
-  }
+.input {
+  @apply border w-full p-2 rounded mb-2 bg-transparent;
+}
 
-  .card {
-    @apply bg-white/20 dark:bg-gray-800/30 backdrop-blur-md border border-gray-200/20 dark:border-gray-700/30 rounded-lg shadow-lg;
-  }
 
-  .glass {
-    @apply bg-white/10 dark:bg-gray-800/20 backdrop-blur-md border border-white/20 dark:border-gray-700/30;
-  }
 }

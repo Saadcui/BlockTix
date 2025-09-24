@@ -2,13 +2,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user , logout } = useAuth();
   return (
-<nav className="glass border-b border-gray-200/20 dark:border-gray-700/30 sticky top-0 z-50 shadow-md">
+<nav className="bg-white/10 backdrop-blur-md border-b sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
         
         {/* Left side: Logo + Links */}
@@ -16,7 +15,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="text-xl sm:text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 transition-colors duration-300 no-underline"
+            className="text-xl sm:text-2xl font-extrabold tracking-tight text-black  transition no-underline"
           >
             BlockTix
           </Link>
@@ -30,9 +29,8 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Right side: Theme Toggle + Auth */}
-        <div className="hidden md:flex items-center gap-4">
-          <ThemeToggle />
+        {/* Right side: Log In Button */}
+        <div className="hidden md:block">
           { user ? (
               <div>
                 <Link href={`/profile/${user.role}`} className="bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline" >Profile</Link>
@@ -40,18 +38,17 @@ export default function Navbar() {
               </div>
           ) : ( 
           <>
-          <Link href="/login" className="bg-transparent text-gray-900 dark:text-gray-100 hover:bg-primary-500 hover:text-white font-bold py-2 px-4 rounded transition-colors duration-300 no-underline">Sign In</Link>
+          <Link href="/login" className="bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline">Sign In</Link>
           <Link href="/signup" className="btn w-auto no-underline m-2">Sign Up</Link>
             </>
           )}
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center gap-2">
-          <ThemeToggle />
+        <div className="md:hidden">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300"
+            className="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
           >
             {isMobileMenuOpen ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +65,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-md">
+        <div className="md:hidden bg-white border-t shadow-md">
           <div className="p-4 flex flex-col gap-2">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="link">Home</Link>
             <Link href="/discover" onClick={() => setIsMobileMenuOpen(false)} className="link">Discover</Link>

@@ -48,11 +48,11 @@ export default function SignupPage() {
   return (
     <form onSubmit={handleSignup} className="flex flex-col items-center justify-center min-h-screen" >
       
-      {error && <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
 
     
-      <div className='w-[400px] h-[auto] mx-auto card p-10' >
-      <h2 className='font-bold mb-4 text-gray-900 dark:text-gray-100 text-2xl'>Create An Account</h2>
+      <div className='w-[400px] h-[auto] mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg ' >
+      <h2 className='font-bold mb-4'>Create An Account</h2>
       <div>
       <label className='label'>Full Name</label>
       <input className='input' type="text" placeholder="Name"  value={name}  onChange={e => setName(e.target.value)} required />
@@ -68,15 +68,11 @@ export default function SignupPage() {
       <label className='label'>Confirm Password</label>
       <input className='input' type="password" placeholder="Confirm Password" value={checkPassword} onChange={e => setCheckPassword(e.target.value)} required />
       </div>
-      <div className="flex gap-4 mb-4">
-      <label className="text-gray-700 dark:text-gray-300 flex items-center gap-2">
-        <input type='radio' value='user' checked={role === 'user'} onChange={e => setRole(e.target.value)} className="text-primary-500" />
-        User
-      </label>
-      <label className="text-gray-700 dark:text-gray-300 flex items-center gap-2">
-        <input type='radio' value='organizer' checked={role === 'organizer'} onChange={e => setRole(e.target.value)} className="text-primary-500" />
-        Organizer
-      </label>
+      <div>
+      <label >User </label>
+      <input type='radio' value='user' checked={role === 'user'} onChange={e => setRole(e.target.value)} />
+      <label >Organizer</label>
+      <input type='radio' value='organizer' checked={role === 'organizer'} onChange={e => setRole(e.target.value)} />
       </div>
       <button type="submit" className='btn w-[417px]' disabled={loading} style={{ opacity: loading ? 0.75 : 1 }}>Create Account</button>
       </div>
