@@ -95,15 +95,15 @@ export default function DiscoverPage() {
     <main className="min-h-screen px-6 py-8">
       {/* Page Header */}
       <div className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Discover Events</h1>
-        <p className="text-lg text-gray-600 mt-2">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100">Discover Events</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
           Find and attend events that interest you
         </p>
       </div>
 
       {/* Filter Section */}
-      <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 border">
-        <h2 className="text-xl font-semibold mb-6 text-gray-800">Filter Events</h2>
+      <div className="max-w-7xl mx-auto card p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-gray-100">Filter Events</h2>
 
         {/* Filter Inputs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
@@ -125,7 +125,7 @@ export default function DiscoverPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="input"
+              className="input bg-white dark:bg-gray-800"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -164,21 +164,21 @@ export default function DiscoverPage() {
       </div>
 
       {/* Events Grid */}
-      <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg">
+      <div className="max-w-7xl mx-auto card p-10">
         {filteredEvents.length === 0 ? (
-          <p className="text-center text-gray-500 text-lg">No events match your filters.</p>
+          <p className="text-center text-gray-500 dark:text-gray-400 text-lg">No events match your filters.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
               <div
                 key={event._id}
-                className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
+                className="card hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer"
                 onClick={() => {
                   router.push(`/event/${event.eventId}`)
                 }}
               >
                 {/* Event Image Placeholder */}
-                <div className="h-40 bg-gradient-to-br from-purple-100 to-gray-100 flex items-center justify-center">
+                <div className="h-40 bg-gradient-to-br from-purple-100 dark:from-purple-900 to-gray-100 dark:to-gray-800 flex items-center justify-center">
                   {event.image ? (
                     <img
                       src={event.image}
@@ -186,17 +186,17 @@ export default function DiscoverPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-gray-400 text-lg">No Image</span>
+                    <span className="text-gray-400 dark:text-gray-500 text-lg">No Image</span>
                   )}
                 </div>
 
                 {/* Event Details */}
                 <div className="p-4">
-                  <h3 className="text-xl font-bold text-gray-900 truncate">{event.event}</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 truncate">{event.event}</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
                     <strong>Date:</strong> {new Date(event.date).toLocaleDateString()}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     <strong>Location:</strong> {event.location}
                   </p>
                 </div>
