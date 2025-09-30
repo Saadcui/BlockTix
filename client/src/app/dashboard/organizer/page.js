@@ -4,6 +4,7 @@ import React from 'react'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 export default function OrganizerDashboard() {
   const { user } = useAuth();
@@ -16,11 +17,20 @@ export default function OrganizerDashboard() {
   const [totalTickets, setTotalTickets] = useState(0);
   const [image, setImage] = useState('');
 
+  // Early Bird Ticketing States
+  const [ebEnabled, setEbEnabled] = useState(false);
+  const [ebPrice, setEbPrice] = useState(0);
+  const [ebEndDate, setEbEndDate] = useState('');
+  const [ebMaxTickets, setEbMaxTickets] = useState(0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user?.uid) {
-      alert("You must be logged in to create an event");
+      toast.error("You must be logged in to create an event");
+      return;
+    }
+    if (price < 0 || totalTickets < 0) {
+      toast.error("Price and Total Tickets must be non-negative");
       return;
     }
 
@@ -38,7 +48,15 @@ export default function OrganizerDashboard() {
       price,
       totalTickets,
       image,
-      organizerId: user?.uid
+      organizerId: user?.uid,
+      earlyBird: ebEnabled ? {
+        enabled: true,
+        discountPrice: ebPrice,
+        endDate: ebEndDate || null,
+        maxTickets: ebMaxTickets || null,
+        soldCount: 0
+      } : { enabled: false }
+
     };
 
     const res = await fetch('/api/organizer', {
@@ -63,13 +81,14 @@ export default function OrganizerDashboard() {
      <ProtectedRoute allowedRoles={["organizer"]}>
       <h2 className='m-10'>Create Event</h2>
 
-      <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center m-4'>
-      <div className='w-[400px] flex flex-col gap-4 bg-white/10 backdrop:blur-md p-8 rounded-lg'>
+      <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center'>
+      <div className='flex flex-col sm:flex-row  items-center justify-center gap-6 bg-white/10 backdrop:blur-md rounded-lg '>
+      <div className='left w-1/2 m-4'>
         <div>
           <label htmlFor="event" className='label'>Event Name:</label>
           <input type="text" name="event" placeholder="Event Name" required className='input' onChange={(e) => setEvent(e.target.value)}/>
         </div>
-        <div className='flex justify-between'>
+        <div className='flex justify-between gap-3'>
           <div>
           <label htmlFor="date" >Date:</label>
           <input type="date" name="date" required className='input' onChange={(e) => setDate(e.target.value)}/>
@@ -86,7 +105,8 @@ export default function OrganizerDashboard() {
         </div>
         <div>
           <label htmlFor="category" className='label'>Event Category:</label>
-          <select name="category" required className='w-[417px] input' onChange={(e) => setCategory(e.target.value)}>
+          <select name="category" required className='input' onChange={(e) => setCategory(e.target.value)}>
+            <option value="">Select Category</option>
             <option value="Art">Art</option>
             <option value="Sports">Sports</option>
             <option value="Food And Drink">Food And Drink</option>
@@ -96,20 +116,72 @@ export default function OrganizerDashboard() {
             <option value="Other">Other</option>
           </select>
         </div>
+        </div>
+
+
+        <div className='right w-1/2 m-4 '>
           <div>
           <label htmlFor="price" className='label'>Ticket Price:</label>
-          <input type="number" name="price" placeholder="Ticket Price" required className='input' onChange={(e) => setPrice(e.target.value)}/>
+          <input type="number" name="price" placeholder="Ticket Price" required className='input' min="0" onChange={(e) => setPrice(e.target.value)}/>
           </div>
           <div>
           <label htmlFor="totalTickets" className='label'>Total Tickets:</label>
-          <input type="number" name="totalTickets" placeholder="Total Tickets" required className='input' onChange={(e) => setTotalTickets(e.target.value)}/>
+          <input type="number" name="totalTickets" placeholder="Total Tickets" required className='input' min="0" onChange={(e) => setTotalTickets(e.target.value)}/>
           </div>
         <div>
           <label htmlFor="image" className='label'>Image URL (Optional)</label>
           <input type="text" name="image" placeholder='https://example.com/image.jpg' className='input' onChange={(e) => setImage(e.target.value)}/>
         </div>
-        <button type="submit" className='btn w-[417px]'>Create Event</button>
+
+        <div className="border-t border-gray-400 pt-4 mt-4">
+            <label className="flex items-center gap-2 text">
+              <input
+                type="checkbox"
+                checked={ebEnabled}
+                onChange={(e) => setEbEnabled(e.target.checked)}
+              />
+              Enable Early Bird Discount
+            </label>
+
+            {ebEnabled && (
+              <div className="mt-3 flex flex-col gap-3">
+                <div>
+                  <label className="label">Discount Price:</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="input"
+                    placeholder="Discounted Ticket Price"
+                    onChange={(e) => setEbPrice(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="label">End Date (Optional):</label>
+                  <input
+                    type="date"
+                    className="input"
+                    onChange={(e) => setEbEndDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="label">Max Discounted Tickets (Optional):</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="input"
+                    placeholder="Quota"
+                    onChange={(e) => setEbMaxTickets(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          </div>
+
+
       </div>
+      <button type="submit" className='btn w-[417px]'>Create Event</button>
+
       </form>
     </ProtectedRoute>
   )

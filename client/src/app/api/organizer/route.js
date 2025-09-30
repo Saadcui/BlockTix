@@ -9,7 +9,7 @@ export async function POST(req) {
 
         
         await dbConnect();
-        const { event, date, time, location, category, price, totalTickets, image, organizerId } = await req.json();
+        const { event, date, time, location, category, price, totalTickets, image, organizerId, earlyBird } = await req.json();
 
         const newEvent = await Event.create({
         event,
@@ -21,7 +21,8 @@ export async function POST(req) {
         totalTickets,
         remainingTickets: totalTickets,
         image,
-        organizerId
+        organizerId,
+        ...(earlyBird && typeof earlyBird === 'object' ? { earlyBird } : {})
         });
 
         return NextResponse.json({ message: 'Event created successfully' }, { status: 201 });

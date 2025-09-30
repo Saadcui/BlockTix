@@ -169,7 +169,16 @@ export default function DiscoverPage() {
           <p className="text-center text-gray-500 text-lg">No events match your filters.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => (
+            {filteredEvents.map((event) => {
+               const eb = event.earlyBird;
+                const now = new Date();
+                const isTimeValid = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
+                const isQuotaValid =
+                  eb?.enabled &&
+                  typeof eb.maxTickets === "number" &&
+                  (eb.soldCount ?? 0) < eb.maxTickets;
+                   const earlyBirdActive = eb?.enabled && (isTimeValid || isQuotaValid);
+              return(
               <div
                 key={event._id}
                 className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
@@ -199,9 +208,23 @@ export default function DiscoverPage() {
                   <p className="text-gray-600">
                     <strong>Location:</strong> {event.location}
                   </p>
+
+
+                  {earlyBirdActive ? (
+                    <p className="text-green-600 font-semibold">
+                      Early Bird Price: ${event.earlyBird.discountPrice}
+                      <span className="line-through text-gray-500 ml-2 text-sm">
+                        ${event.price}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="text-gray-800 font-semibold">Price: ${event.price}</p>
+                  )}
+
+                  
                 </div>
               </div>
-            ))}
+    )})}
           </div>
         )}
       </div>

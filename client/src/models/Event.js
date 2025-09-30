@@ -57,6 +57,13 @@ const eventSchema = new mongoose.Schema({
     type: String,
     ref: "Organizer",
     required: true
+  },
+  earlyBird: {
+    enabled: { type: Boolean, default: false },
+    discountPrice: { type: Number, min: 0 },
+    endDate: { type: Date },
+    maxTickets: { type: Number, min: 1 },
+    soldCount: { type: Number, default: 0 }
   }
 }, { timestamps: true });
 

@@ -26,24 +26,33 @@ export default function Dashboard() {
   }, [user]);
 
   function Ticket({ ticket }) {
-  
+  const event = ticket.eventId;
+
+  if (!event) {
     return (
-      <div className="border p-4 m-2 rounded shadow-md w-60">
-        {ticket.eventId.image ? (
-          <img src={ticket.eventId.image} alt="Ticket" className="w-full h-40 object-cover rounded"  />
-        ) : (
-          <div className="h-40 w-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
-            No Image
-          </div>
-        )}
-        <h4>{ticket.eventId.event}</h4>
-        <p>Price: {ticket.eventId.price}</p>
-        <p>Date: {new Date(ticket.eventId.date).toLocaleDateString()}</p>
-        <p>Time: {ticket.eventId.time}</p>
-        <p>Remaining: {ticket.eventId.remainingTickets}</p>
+      <div className="border p-4 m-2 rounded shadow-md w-60 text-red-500">
+        Invalid Ticket Data
       </div>
     );
   }
+
+  return (
+    <div className="border p-4 m-2 rounded shadow-md w-60">
+      {event.image ? (
+        <img src={event.image} alt="Ticket" className="w-full h-40 object-cover rounded" />
+      ) : (
+        <div className="h-40 w-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
+          No Image
+        </div>
+      )}
+      <h4>{event.event}</h4>
+      <p>Price: {event.price}</p>
+      <p>Date: {new Date(event.date).toLocaleDateString()}</p>
+      <p>Time: {event.time}</p>
+      <p>Remaining: {event.remainingTickets}</p>
+    </div>
+  );
+}
 
   return (
     <ProtectedRoute>

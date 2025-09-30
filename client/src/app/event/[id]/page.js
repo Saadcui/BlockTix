@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState} from 'react';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import { useAuth } from '@/context/AuthContext';
 
@@ -15,6 +15,9 @@ function Event() {
   const [error, setError] = useState(null);
   const { user } = useAuth();
 
+
+
+ 
 
   async function handleBuyTicket() {
 
@@ -42,18 +45,15 @@ function Event() {
     }
 
     toast.success("Ticket purchased successfully!");
-    setEvent(prev => ({
-      ...prev,
-      remainingTickets: prev.remainingTickets - 1
-    }));
+
+    await fetchEvent();
+    
+  
   } catch (err) {
     toast.error("Error: " + err.message);
   }
 }
-
-
-  useEffect(() => {
-    async function fetchEvent() {
+  async function fetchEvent() {
       try {
         const res = await fetch(`/api/events/${id}`);
         const data = await res.json();
@@ -65,13 +65,28 @@ function Event() {
       }
     }
 
-    if (id) fetchEvent();
+
+  useEffect(() => {
+      if (id) fetchEvent();
   }, [id]);
 
   if (loading) return <p className="p-6 text-gray-500">Loading event...</p>;
   if (error) return <p className="p-6 text-red-500">Error: {error}</p>;
   if (!event) return <p className="p-6">No event found.</p>;
 
+
+const earlyBirdActive = () => {
+  const eb = event?.earlyBird;
+  const now = new Date();
+
+  const isTimeValid = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
+  const isQuotaValid =
+    eb?.enabled &&
+    typeof eb.maxTickets === 'number' &&
+    (eb.soldCount ?? 0) < eb.maxTickets;
+
+  return eb?.enabled && (isTimeValid || isQuotaValid);
+}
   return (
     <>
     <div  className="w-full h-[400px] bg-cover flex justify-between" style={{ backgroundImage: `url(${event.image})` } }>
@@ -94,9 +109,19 @@ function Event() {
     <div className='w-[300px] border border-gray-100'>
       <h2>Get Tickets</h2>
       <div className='flex flex-col box-border'>
-        <p className='m-2'>price : {event.price}</p>
-        <p className='m-2'>ticket: {event.totalTickets}</p>
-        <p className='m-2'>Remaining ticket: {event.remainingTickets}</p>
+      
+      
+      {earlyBirdActive() ? (
+        <p className='m-2 text-green-600 font-semibold'>
+          Early Bird Price: ${event.earlyBird.discountPrice}
+        </p>
+      ) : (
+        <p className='m-2'>Regular Price: ${event.price}</p>
+      )}
+
+      
+      <p className='m-2'>Total tickets: {event.totalTickets}</p>
+      <p className='m-2'>Remaining tickets: {event.remainingTickets}</p>
 
       <button className='btn w-[200px] m-2' onClick={handleBuyTicket} >Buy ticket</button>
       </div>

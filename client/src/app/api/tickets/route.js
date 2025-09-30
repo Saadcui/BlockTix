@@ -16,6 +16,15 @@ export async function POST(req) {
     if (!event) {
       return new Response(JSON.stringify({ error: "Event not found" }), { status: 404 });
     }
+    let ticketPrice = event.price; // default regular price
+    if (
+      event.earlyBird?.enabled &&
+      new Date() <= new Date(event.earlyBird.endDate) &&
+      event.earlyBird.soldCount < event.earlyBird.maxTickets
+    ) {
+      ticketPrice = event.earlyBird.discountPrice;
+      event.earlyBird.soldCount += 1; // track early bird sales
+    }
 
    
     if (event.remainingTickets <= 0) {
@@ -29,6 +38,9 @@ export async function POST(req) {
     await ticket.save();
 
     event.remainingTickets -= 1;
+    event.earlyBird.soldCount = (event.earlyBird.soldCount || 0) + 1; // increment sold count
+
+  
     await event.save();
 
     return new Response(JSON.stringify({ success: true, ticket }), { status: 201 });

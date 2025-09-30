@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext'
 import toast from 'react-hot-toast';
-import { set } from 'mongoose';
 
 
 export default function Home() {
@@ -69,7 +68,7 @@ export default function Home() {
     <div>
       <div className='flex flex-col items-center justify-center min-h-screen shadow-xl'>
       <h1 className='sm:text-6xl font-bold m-0 w-3/4 text-center'>Discover and attend events with       <span
-        className={`text-[#7C3AED] inline-block transition-opacity transition-transform duration-700 ease-out ${
+        className={`text-[#7C3AED] inline-block transition-all duration-700 ease-out ${
           show ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
         }`}
       >blockchain security</span></h1>
