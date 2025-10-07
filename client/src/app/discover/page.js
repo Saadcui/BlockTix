@@ -1,54 +1,44 @@
-// src/app/discover/page.js
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
-/**
- * DiscoverPage Component
- * 
- * A fully-featured event discovery interface that allows users to:
- * - View a list of upcoming events
- * - Filter events by name, category, and location
- * - Reset filters with a single click
- * 
- * Data is fetched from a MongoDB Atlas cluster via an API route.
- * Filtering is performed client-side for immediate responsiveness.
- * 
- * @returns {JSX.Element} The rendered Discover page
- */
 export default function DiscoverPage() {
-  // State for storing all events fetched from the database
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState([]); // All events
+  const [filteredEvents, setFilteredEvents] = useState([]); // Filtered events
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('All');
+  const [location, setLocation] = useState('');
+  const { user } = useAuth();
   const router = useRouter();
 
-  // State for storing the currently filtered list of events
-  const [filteredEvents, setFilteredEvents] = useState([]);
-
-  // State for filter inputs
-  const [search, setSearch] = useState('');      // Search by event name
-  const [category, setCategory] = useState('');  // Filter by category
-  const [location, setLocation] = useState('');  // Filter by location
-
-  // Predefined list of categories for the dropdown
   const categories = [
-   "All", "Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"
+    'All',
+    'Art',
+    'Sports',
+    'Food And Drink',
+    'Education',
+    'Festival',
+    'Music',
+    'Other',
   ];
 
-  /**
-   * Effect Hook: Fetch events from the API on component mount
-   * 
-   * This effect runs once when the component is first rendered.
-   * It fetches all events from the backend API and populates the state.
-   */
+  // 🔹 Fetch events (with recommendations if logged in)
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch('/api/events');
+        let res;
+        if (user?.uid) {
+          res = await fetch(`/api/recommendations?firebase_uid=${user.uid}`);
+        } else {
+          res = await fetch('/api/events');
+        }
+
         const data = await res.json();
         if (data.success) {
           setEvents(data.events);
-          setFilteredEvents(data.events); // Initialize filtered events with all events
+          setFilteredEvents(data.events);
         }
       } catch (error) {
         console.error('Failed to fetch events:', error);
@@ -56,58 +46,71 @@ export default function DiscoverPage() {
     };
 
     fetchEvents();
-  }, []);
+  }, [user]);
 
-  /**
-   * Effect Hook: Apply filters whenever input values or events change
-   * 
-   * This effect runs whenever `search`, `category`, `location`, or `events` change.
-   * It filters the event list based on the current filter criteria.
-   */
+  // 🔹 Apply filters (purely client-side, no API calls)
   useEffect(() => {
-    let result = [...events]; // Work with a copy
+    let result = [...events];
 
-    // Filter by event name (partial match, case-insensitive)
-    if (search) {
-      result = result.filter((e) =>
-        e.event?.toLowerCase().includes(search.toLowerCase())
-      );
+    if (search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      result = result.filter((e) => searchRegex.test(e.event || ''));
     }
 
-    // Filter by category (exact match, case-insensitive)
     if (category && category !== 'All') {
-      result = result.filter((e) =>
-        e.category?.toLowerCase() === category.toLowerCase()
+      result = result.filter(
+        (e) => e.category?.toLowerCase() === category.toLowerCase()
       );
     }
 
-    // Filter by location (partial match, case-insensitive)
-    if (location) {
-      result = result.filter((e) =>
-        e.location?.toLowerCase().includes(location.toLowerCase())
-      );
+    if (location.trim()) {
+      const locRegex = new RegExp(location.trim(), 'i');
+      result = result.filter((e) => locRegex.test(e.location || ''));
     }
 
     setFilteredEvents(result);
   }, [search, category, location, events]);
 
+  // 🔹 Handle click on event (update preference)
+  const handleEventClick = async (event) => {
+    router.push(`/event/${event.eventId}`);
+
+    if (user?.uid) {
+      try {
+        await fetch('/api/preferences/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firebase_uid: user.uid,
+            category: event.category?.toLowerCase() || 'general',
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to update preference:', err);
+      }
+    }
+  };
+
   return (
     <main className="min-h-screen px-6 py-8">
-      {/* Page Header */}
+      {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Discover Events</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          Discover Events
+        </h1>
         <p className="text-lg text-gray-600 mt-2">
           Find and attend events that interest you
         </p>
       </div>
 
-      {/* Filter Section */}
+      {/* Filters */}
       <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 border">
-        <h2 className="text-xl font-semibold mb-6 text-gray-800">Filter Events</h2>
+        <h2 className="text-xl font-semibold mb-6 text-gray-800">
+          Filter Events
+        </h2>
 
-        {/* Filter Inputs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-          {/* Search by Event Name */}
+          {/* Search */}
           <div>
             <label className="label font-semibold">Search by Event</label>
             <input
@@ -119,7 +122,7 @@ export default function DiscoverPage() {
             />
           </div>
 
-          {/* Filter by Category */}
+          {/* Category */}
           <div>
             <label className="label font-semibold">Category</label>
             <select
@@ -135,7 +138,7 @@ export default function DiscoverPage() {
             </select>
           </div>
 
-          {/* Filter by Location */}
+          {/* Location */}
           <div>
             <label className="label font-semibold">Location</label>
             <input
@@ -148,13 +151,14 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        {/* Clear Filters Button */}
+        {/* Clear Filters */}
         <div className="mt-6">
           <button
             onClick={() => {
               setSearch('');
-              setCategory('');
+              setCategory('All');
               setLocation('');
+              setFilteredEvents(events);
             }}
             className="btn font-bold"
           >
@@ -163,68 +167,75 @@ export default function DiscoverPage() {
         </div>
       </div>
 
-      {/* Events Grid */}
+      {/* Event Grid */}
       <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg">
         {filteredEvents.length === 0 ? (
-          <p className="text-center text-gray-500 text-lg">No events match your filters.</p>
+          <p className="text-center text-gray-500 text-lg">
+            No events match your filters.
+          </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => {
-               const eb = event.earlyBird;
-                const now = new Date();
-                const isTimeValid = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
-                const isQuotaValid =
-                  eb?.enabled &&
-                  typeof eb.maxTickets === "number" &&
-                  (eb.soldCount ?? 0) < eb.maxTickets;
-                   const earlyBirdActive = eb?.enabled && (isTimeValid || isQuotaValid);
-              return(
-              <div
-                key={event._id}
-                className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
-                onClick={() => {
-                  router.push(`/event/${event.eventId}`)
-                }}
-              >
-                {/* Event Image Placeholder */}
-                <div className="h-40 bg-gradient-to-br from-purple-100 to-gray-100 flex items-center justify-center">
-                  {event.image ? (
-                    <img
-                      src={event.image}
-                      alt={event.event}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-gray-400 text-lg">No Image</span>
-                  )}
-                </div>
+              const eb = event.earlyBird;
+              const now = new Date();
+              const isTimeValid =
+                eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
+              const isQuotaValid =
+                eb?.enabled &&
+                typeof eb.maxTickets === 'number' &&
+                (eb.soldCount ?? 0) < eb.maxTickets;
 
-                {/* Event Details */}
-                <div className="p-4">
-                  <h3 className="text-xl font-bold text-gray-900 truncate">{event.event}</h3>
-                  <p className="text-gray-600">
-                    <strong>Date:</strong> {new Date(event.date).toLocaleDateString()}
-                  </p>
-                  <p className="text-gray-600">
-                    <strong>Location:</strong> {event.location}
-                  </p>
+              const earlyBirdActive =
+                eb?.enabled && (isTimeValid || isQuotaValid);
 
+              return (
+                <div
+                  key={event._id}
+                  className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
+                  onClick={() => handleEventClick(event)}
+                >
+                  {/* Event Image */}
+                  <div className="h-40 bg-gradient-to-br from-purple-100 to-gray-100 flex items-center justify-center">
+                    {event.image ? (
+                      <img
+                        src={event.image}
+                        alt={event.event}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-lg">No Image</span>
+                    )}
+                  </div>
 
-                  {earlyBirdActive ? (
-                    <p className="text-green-600 font-semibold">
-                      Early Bird Price: ${event.earlyBird.discountPrice}
-                      <span className="line-through text-gray-500 ml-2 text-sm">
-                        ${event.price}
-                      </span>
+                  {/* Event Info */}
+                  <div className="p-4">
+                    <h3 className="text-xl font-bold text-gray-900 truncate">
+                      {event.event}
+                    </h3>
+                    <p className="text-gray-600">
+                      <strong>Date:</strong>{' '}
+                      {new Date(event.date).toLocaleDateString()}
                     </p>
-                  ) : (
-                    <p className="text-gray-800 font-semibold">Price: ${event.price}</p>
-                  )}
+                    <p className="text-gray-600">
+                      <strong>Location:</strong> {event.location}
+                    </p>
 
-                  
+                    {earlyBirdActive ? (
+                      <p className="text-green-600 font-semibold">
+                        Early Bird Price: ${event.earlyBird.discountPrice}
+                        <span className="line-through text-gray-500 ml-2 text-sm">
+                          ${event.price}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-gray-800 font-semibold">
+                        Price: ${event.price}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-    )})}
+              );
+            })}
           </div>
         )}
       </div>
