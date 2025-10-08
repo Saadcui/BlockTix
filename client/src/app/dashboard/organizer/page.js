@@ -81,8 +81,8 @@ export default function OrganizerDashboard() {
      <ProtectedRoute allowedRoles={["organizer"]}>
       <h2 className='m-10'>Create Event</h2>
 
-      <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center'>
-      <div className='flex flex-col sm:flex-row  items-center justify-center gap-6 bg-white/10 backdrop:blur-md rounded-lg '>
+      <form onSubmit={handleSubmit} className='flex flex-col items-center justify-cente'>
+      <div className='flex flex-col sm:flex-row  items-center justify-center gap-6 bg-white/10 backdrop:blur-md rounded-lg p-6 '>
       <div className='left w-1/2 m-4'>
         <div>
           <label htmlFor="event" className='label'>Event Name:</label>

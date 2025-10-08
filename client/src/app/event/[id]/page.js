@@ -78,7 +78,7 @@ function Event() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-purple-50 to-white">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <div
         className="relative flex h-[500px] w-full items-end bg-cover bg-center"
@@ -116,7 +116,7 @@ function Event() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
           {/* About Section */}
           <div className="lg:col-span-2">
-            <div className="rounded-3xl bg-white/80 p-10 shadow-lg backdrop-blur-xl transition hover:shadow-2xl">
+            <div className="rounded-3xl bg-white/10 backdrop-blur-md p-10 shadow-lg transition hover:shadow-2xl">
               <h3 className="mb-6 text-3xl font-bold text-gray-900">
                 About This Event
               </h3>
@@ -131,7 +131,7 @@ function Event() {
 
           {/* Ticket Section */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8 rounded-3xl border border-purple-100 bg-white/90 p-8 shadow-xl backdrop-blur-xl">
+            <div className="sticky top-8 rounded-3xl border border-purple-100 bg-white/10 p-8 shadow-xl backdrop-blur-md">
               <h2 className="mb-8 text-center text-2xl font-bold text-gray-900">
                 🎟️ Get Tickets
               </h2>
@@ -143,10 +143,10 @@ function Event() {
                     <div className="text-4xl font-extrabold text-purple-600">
                       Rs {event.earlyBird.discountPrice}
                     </div>
-                    <div className="text-lg text-gray-400 line-through">
+                    <div className="text-lg text-gray-500 line-through">
                       Rs {event.price}
                     </div>
-                    <span className="rounded-full bg-green-100 px-4 py-1 text-sm font-semibold text-green-800">
+                    <span className="rounded-full px-4 py-1 text-sm font-semibold text-green-800 bg-green-200">
                       🎉 Early Bird Special
                     </span>
                   </div>
@@ -192,7 +192,7 @@ function Event() {
               </button>
 
               {/* Security Notice */}
-              <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-center">
+              <div className="mt-6 rounded-xl border border-blue-200 bg-white/30 p-4 text-center">
                 <p className="text-sm text-blue-800">
                   <span className="font-semibold">🔒 Secure Purchase</span>
                   <br />
