@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { Eye, EyeOff } from 'lucide-react'; // ✅ Imported as in Version 2
 
 // Validation helpers from Version 2
 const isValidName = (name) => /^[a-zA-Z\s]+$/.test(name.trim());
@@ -110,16 +111,18 @@ export default function SignupPage() {
           <label className='label'>Password</label>
           <div style={{ position: 'relative' }}>
             <input
-              className='input'
+              className="input"
               type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
               style={{
                 position: 'absolute',
                 right: '10px',
@@ -128,11 +131,10 @@ export default function SignupPage() {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: '#7C3AED',
-                fontSize: '0.875rem',
+                color: '#555',
               }}
             >
-              {showPassword ? 'Hide' : 'Show'}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
 
@@ -140,11 +142,11 @@ export default function SignupPage() {
 
           <label className='label'>Confirm Password</label>
           <input
-            className='input'
+            className="input"
             type={showPassword ? 'text' : 'password'}
             placeholder="Confirm Password"
             value={checkPassword}
-            onChange={e => setCheckPassword(e.target.value)}
+            onChange={(e) => setCheckPassword(e.target.value)}
             required
           />
         </div>
