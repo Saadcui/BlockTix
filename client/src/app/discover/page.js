@@ -24,7 +24,7 @@ export default function DiscoverPage() {
     'Other',
   ];
 
-  // 🔹 Fetch events (with recommendations if logged in)
+  //  Fetch events (with recommendations if logged in)
   useEffect(() => {
     const fetchEvents = async () => {
       try {

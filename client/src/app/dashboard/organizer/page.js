@@ -78,7 +78,7 @@ export default function OrganizerDashboard() {
 
 
   return (
-     <ProtectedRoute allowedRoles={["organizer"]}>
+     <ProtectedRoute allowedRoles={["organizer","admin"]}>
       <h2 className='m-10'>Create Event</h2>
 
       <form onSubmit={handleSubmit} className='flex flex-col items-center justify-cente'>

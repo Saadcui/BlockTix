@@ -124,13 +124,13 @@ export default function Home() {
         {/* Buttons */}
         <div>
           <button
-            className="bg-[#7C3AED] text-white py-2 px-4 rounded-md w-32 cursor-pointer"
+            className="bg-[#7C3AED] text-white py-2 px-4 rounded-md w-32 cursor-pointer border-none"
             onClick={() => router.push('/discover')}
           >
             Explore
           </button>
           <button
-            className="bg-[#7C3AED] text-white py-2 px-4 rounded-md m-2 w-32 cursor-pointer"
+            className="bg-[#7C3AED] text-white py-2 px-4 rounded-md m-2 w-32 cursor-pointer border-none"
             onClick={handleClick}
           >
             Create Event
