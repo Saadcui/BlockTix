@@ -18,20 +18,15 @@ export default function Home() {
     setShow(true);
   }, []);
 
-  // ✅ Fetch events — personalized if logged in, default otherwise
+  // ✅ Fetch events — always going through the MovieLens-based recommendations API.
+  // If a user is logged in, their firebase_uid is mapped onto a MovieLens user id
+  // on the server; otherwise, the API simply returns all events without ordering.
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
       try {
-        let res;
-        if (user?.uid) {
-          // fetch personalized recommendations
-          res = await fetch(`/api/recommendations?firebase_uid=${user.uid}`);
-        } else {
-          // fallback to all events
-          res = await fetch('/api/events');
-        }
-
+        const query = user?.uid ? `?firebase_uid=${user.uid}` : '';
+        const res = await fetch(`/api/recommendations${query}`);
         const data = await res.json();
 
         if (data.success) {

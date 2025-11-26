@@ -24,16 +24,14 @@ export default function DiscoverPage() {
     'Other',
   ];
 
-  //  Fetch events (with recommendations if logged in)
+  //  Fetch events through the unified MovieLens-backed recommendations API.
+  //  Logged-in users are mapped to a MovieLens user id on the server so their
+  //  event ordering reflects CSV-based preferences.
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        let res;
-        if (user?.uid) {
-          res = await fetch(`/api/recommendations?firebase_uid=${user.uid}`);
-        } else {
-          res = await fetch('/api/events');
-        }
+        const query = user?.uid ? `?firebase_uid=${user.uid}` : '';
+        const res = await fetch(`/api/recommendations${query}`);
 
         const data = await res.json();
         if (data.success) {
@@ -71,22 +69,23 @@ export default function DiscoverPage() {
     setFilteredEvents(result);
   }, [search, category, location, events]);
 
-  // 🔹 Handle click on event (update preference)
+  // 🔹 Handle click on event and record a simple preference signal
   const handleEventClick = async (event) => {
     router.push(`/event/${event.eventId}`);
 
-    if (user?.uid) {
+    // Fire-and-forget preference update; we don't block navigation on this.
+    if (user?.uid && event.category) {
       try {
-        await fetch('/api/preferences/update', {
+        fetch('/api/preferences/click', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             firebase_uid: user.uid,
-            category: event.category?.toLowerCase() || 'general',
+            category: event.category,
           }),
-        });
-      } catch (err) {
-        console.error('Failed to update preference:', err);
+        }).catch(() => {});
+      } catch {
+        // Intentionally ignore errors here
       }
     }
   };
@@ -222,14 +221,14 @@ export default function DiscoverPage() {
 
                     {earlyBirdActive ? (
                       <p className="text-green-600 font-semibold">
-                        Early Bird Price: ${event.earlyBird.discountPrice}
+                        Early Bird Price: Rs {event.earlyBird.discountPrice}
                         <span className="line-through text-gray-500 ml-2 text-sm">
                           ${event.price}
                         </span>
                       </p>
                     ) : (
                       <p className="text-gray-800 font-semibold">
-                        Price: ${event.price}
+                        Price: Rs {event.price}
                       </p>
                     )}
                   </div>
