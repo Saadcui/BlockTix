@@ -13,7 +13,11 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
     if (!loading) {
       if (!user) {
         router.push("/login");
-      } else if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+      }
+       else if (!user.emailVerified) {
+        router.push("/login");
+      }
+         else if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
         router.push("/");
       } else {
         setAuthorized(true);

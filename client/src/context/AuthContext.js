@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
   signOut,
 } from "firebase/auth";
 
@@ -19,37 +20,51 @@ export const AuthProvider = ({ children }) => {
 
 
 const signup = async (email, password, name, role) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
 
-    const res = await fetch('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firebase_uid: user.uid,
-        email,
-        name,
-        role
-      }),
-    });
+  const res = await fetch("/api/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      firebase_uid: user.uid,
+      email,
+      name,
+      role,
+    }),
+  });
 
-      const data = await res.json();
-      console.log('Raw response from /api/users:', data);
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error("Failed to save user to database");
+  }
 
-      if (!res.ok) {
-        throw new Error('Failed to save user to database');
-      }
-    return { role: data.role };
+  // Send verification email and log user out
+  await sendEmailVerification(user);
+  await signOut(auth);
+
+  return { role: data.role, verificationSent: true };
 };
 
 const login = async (email, password) => {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const firebaseUID = userCredential.user.uid;
+  const firebaseUser = userCredential.user;
+
+  // Block unverified email
+  if (!firebaseUser.emailVerified) {
+    await signOut(auth);
+    const error = new Error("EMAIL_NOT_VERIFIED"); // ✅ underscore, matches UI check
+    throw error;
+  }
+
+  const firebaseUID = firebaseUser.uid;
 
   const res = await fetch(`/api/users/${firebaseUID}`);
   const user = await res.json();
 
-  if (!res.ok) throw new Error('Failed to fetch user role');
+  if (!res.ok) {
+    throw new Error("Failed to fetch user role");
+  }
 
   return { role: user.role };
 };
@@ -90,7 +105,7 @@ useEffect(() => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user: currentUser, signup, login, logout,resetPassword }}>
+    <AuthContext.Provider value={{ user: currentUser, signup, loading, login, logout,resetPassword }}>
       {!loading && children}
     </AuthContext.Provider>
   );

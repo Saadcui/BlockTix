@@ -19,23 +19,35 @@ export default function LoginPage() {
   const validateEmail = (val) => (!val.trim() ? '' : isValidEmail(val) ? '' : 'Please enter a valid email');
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    const eErr = validateEmail(email);
-    if (eErr) {
-      setEmailError(eErr);
-      return;
-    }
-    setEmailError('');
+  e.preventDefault();
+  setError('');
+  const eErr = validateEmail(email);
+  if (eErr) {
+    setEmailError(eErr);
+    return;
+  }
+  setEmailError('');
 
-    try {
-      const { role } = await login(email, password);
-      router.push(`/dashboard/${role}`);
-    } catch (err) {
-      console.error(err);
-      setError("Account not found!");
-    }
-  };
+  try {
+  const { role } = await login(email, password);
+  router.push(`/dashboard/${role}`);
+} catch (err) {
+  console.error("Login error:", err.code, err.message);
+
+  if (err.message === "EMAIL_NOT_VERIFIED") {
+    setError("Please verify your email first. Check your inbox (and spam).");
+  } else if (
+    err.code === "auth/invalid-credential" ||
+    err.code === "auth/invalid-login-credentials"
+  ) {
+    setError("Email or password is incorrect.");
+  } else {
+    setError("Unexpected error. Please try again.");
+  }
+}
+};
+
+
 
   return (
     <form onSubmit={handleLogin} className='flex flex-col items-center justify-center min-h-screen'>
