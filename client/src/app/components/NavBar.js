@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user , logout } = useAuth();
+
   return (
 <nav className="bg-white/10 backdrop-blur-md border-b sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
@@ -24,7 +25,9 @@ export default function Navbar() {
           <div className="hidden md:flex gap-2">
             <Link href="/" className="link">Home</Link>
             <Link href="/discover" className="link">Discover</Link>
-            <Link href="/dashboard/organizer" className="link">Dashboard</Link>
+            {user && user.role !== 'user' && (
+              <Link href="/dashboard/organizer" className="link">Dashboard</Link>
+            )}           
             <Link href="/dashboard/user" className="link">My Tickets</Link>
           </div>
         </div>
@@ -69,7 +72,16 @@ export default function Navbar() {
           <div className="p-4 flex flex-col gap-2">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="link">Home</Link>
             <Link href="/discover" onClick={() => setIsMobileMenuOpen(false)} className="link">Discover</Link>
-            <Link href="/dashboard/organizer" onClick={() => setIsMobileMenuOpen(false)} className="link">Dashboard</Link>
+            {user && user.role !== 'user' && (
+              <Link
+                href="/dashboard/organizer"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="link"
+              >
+                Dashboard
+              </Link>
+            )}            
+
             <Link href="/dashboard/user" onClick={() => setIsMobileMenuOpen(false)} className="link">My Tickets</Link>
             {user ? (
               <>

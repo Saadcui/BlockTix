@@ -20,3 +20,28 @@ export async function GET(req, {params}) {
   }
 }
 
+// UPDATE event
+
+export async function PUT(req, { params }) {
+  try {
+    await dbConnect();
+    const body = await req.json();
+    const updatedEvent = await Event.findByIdAndUpdate(params.id, body, { new: true });
+
+    return NextResponse.json({ success: true, event: updatedEvent });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Update failed" }, { status: 500 });
+  }
+}
+
+// DELETE event
+export async function DELETE(req, { params }) {
+  try {
+    await dbConnect();
+    await Event.findByIdAndDelete(params.id);
+
+    return NextResponse.json({ success: true, message: "Event deleted" });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Delete failed" }, { status: 500 });
+  }
+}

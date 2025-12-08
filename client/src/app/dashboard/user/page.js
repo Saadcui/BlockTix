@@ -28,8 +28,13 @@ export default function Dashboard() {
   }, [user]);
 
   const now = new Date();
-  const upcomingTickets = tickets.filter((t) => new Date(t.eventId.date) >= now);
-  const pastTickets = tickets.filter((t) => new Date(t.eventId.date) < now);
+const upcomingTickets = tickets.filter(
+  (t) => t.eventId?.date && new Date(t.eventId.date) >= now
+);
+const pastTickets = tickets.filter(
+  (t) => t.eventId?.date && new Date(t.eventId.date) < now
+);
+
 
   const totalSpent = tickets.reduce(
     (sum, t) => sum + (t.eventId?.price || 0),
