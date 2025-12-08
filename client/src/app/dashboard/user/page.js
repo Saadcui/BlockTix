@@ -72,7 +72,7 @@ const pastTickets = tickets.filter(
         </p>
         <p className="text-gray-600 text-sm">Time: {event.time}</p>
         <p className="text-purple-600 font-medium mt-2 text-sm">
-          Price: ${event.price}
+          Price: Rs {event.price}
         </p>
       </div>
     );
@@ -108,7 +108,7 @@ const pastTickets = tickets.filter(
           <div className="bg-white/60 backdrop-blur-md border border-purple-100/40 rounded-2xl shadow-md p-6 flex flex-col items-center">
             <p className="text-gray-600">Total Spent</p>
             <h3 className="text-3xl font-bold text-purple-600 mt-1">
-              ${totalSpent}
+              Rs {totalSpent}
             </h3>
           </div>
         </div>

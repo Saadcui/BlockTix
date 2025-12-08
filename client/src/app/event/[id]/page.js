@@ -133,7 +133,7 @@ function Event() {
           <div className="lg:col-span-1">
             <div className="sticky top-8 rounded-3xl border border-purple-100 bg-white/10 p-8 shadow-xl backdrop-blur-md">
               <h2 className="mb-8 text-center text-2xl font-bold text-gray-900">
-                🎟️ Get Tickets
+              Get Tickets
               </h2>
 
               {/* Price */}

@@ -223,7 +223,7 @@ export default function DiscoverPage() {
                       <p className="text-green-600 font-semibold">
                         Early Bird Price: Rs {event.earlyBird.discountPrice}
                         <span className="line-through text-gray-500 ml-2 text-sm">
-                          ${event.price}
+                          Rs {event.price}
                         </span>
                       </p>
                     ) : (
