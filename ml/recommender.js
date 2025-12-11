@@ -14,7 +14,6 @@ const EVENT_CATEGORIES = [
 ];
 
 // Mapping from MovieLens genres to project event categories
-// Updated mapping: Comedy, Romance, Children -> Food And Drink
 const GENRE_TO_CATEGORY = {
   Action: "Sports",
   Adventure: "Sports",
@@ -93,12 +92,11 @@ function loadRatings(csvPath) {
 let CACHE = null;
 function loadData() {
   if (CACHE) return CACHE;
-  // Assume Next runtime cwd is client/, so csvs are at repo root one level up
-  const repoRoot = path.resolve(process.cwd(), "..");
-  const moviesPath = path.join(repoRoot, "movies.csv");
-  const ratingsPath = path.join(repoRoot, "ratings.csv");
+  // Data files are in the ml directory
+  const moviesPath = path.join(__dirname, "movies.csv");
+  const ratingsPath = path.join(__dirname, "ratings.csv");
   if (!fs.existsSync(moviesPath) || !fs.existsSync(ratingsPath)) {
-    throw new Error(`Could not find movies.csv or ratings.csv at ${repoRoot}`);
+    throw new Error(`Could not find movies.csv or ratings.csv in ${__dirname}`);
   }
   const moviesMap = loadMovies(moviesPath);
   const ratings = loadRatings(ratingsPath);
@@ -107,10 +105,22 @@ function loadData() {
 }
 
 /**
- * Get recommended categories for a MovieLens numeric user id
+ * Get all known user IDs from the ratings dataset
+ * @returns {string[]} Array of user IDs
+ */
+function getKnownUserIds() {
+  const { ratings } = loadData();
+  const userIds = new Set();
+  for (const r of ratings) {
+    userIds.add(String(r.userId));
+  }
+  return Array.from(userIds).sort((a, b) => Number(a) - Number(b));
+}
+
+/**
+ * Compute category statistics for a user
  * @param {string|number} userId
- * @param {number} top default 3
- * @returns {Promise<string[]>}
+ * @returns {Array} Array of {category, avg, count} objects
  */
 function computeCategoryStats(userId) {
   if (userId === undefined || userId === null) return [];
@@ -135,16 +145,33 @@ function computeCategoryStats(userId) {
   return averages;
 }
 
+/**
+ * Get recommended categories for a user
+ * @param {string|number} userId
+ * @param {number} top Number of top categories to return (default 3)
+ * @returns {Promise<string[]>} Array of category names
+ */
 async function getRecommendedCategories(userId, top = 3) {
   const averages = computeCategoryStats(userId);
   const result = averages.map((a) => a.category).filter((c) => c !== "All").slice(0, top);
   return result;
 }
 
+/**
+ * Get recommended categories with detailed statistics
+ * @param {string|number} userId
+ * @param {number} top Number of top categories to return (default 3)
+ * @returns {Promise<Array>} Array of {category, avg, count} objects
+ */
 async function getRecommendedCategoriesVerbose(userId, top = 3) {
   const averages = computeCategoryStats(userId);
   const result = averages.filter((a) => a.category !== "All").slice(0, top);
   return result;
 }
 
-module.exports = { getRecommendedCategories, getRecommendedCategoriesVerbose, EVENT_CATEGORIES };
+module.exports = { 
+  getRecommendedCategories, 
+  getRecommendedCategoriesVerbose, 
+  getKnownUserIds,
+  EVENT_CATEGORIES 
+};

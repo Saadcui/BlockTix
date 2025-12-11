@@ -1,0 +1,16 @@
+{
+  "name": "blocktix-ml",
+  "version": "1.0.0",
+  "description": "Machine Learning recommendation service for BlockTix event platform",
+  "main": "recommender.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "recommendation",
+    "collaborative-filtering",
+    "machine-learning"
+  ],
+  "author": "",
+  "license": "MIT"
+}

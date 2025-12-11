@@ -1,20 +1,12 @@
 import crypto from "crypto";
+import path from "path";
 import dbConnect from "@/lib/dbConnect";
 import Event from "@/models/Event";
 import User from "@/models/User";
 import ClickPreference from "@/models/ClickPreference";
 
-/**
- * Unified recommendations endpoint:
- * - Always returns MongoDB events
- * - If we can map the caller to a MovieLens userId, we use the CSV-based
- *   recommender to rank events by their category.
- *
- * Query options:
- * - firebase_uid: current logged-in Firebase user id (preferred)
- * - userId: explicit MovieLens numeric user id (overrides firebase_uid)
- * - top: optional number of top categories from MovieLens to use
- */
+
+
 export async function GET(req) {
   await dbConnect();
 
@@ -28,18 +20,16 @@ export async function GET(req) {
     // 🟢 Base events from MongoDB
     const events = await Event.find({}).lean();
 
-    // If an explicit MovieLens user id is not provided, try to derive one
-    // from the authenticated app user so that every user gets MovieLens-based
-    // ordering without storing separate preference records in MongoDB.
+    // If an explicit user id is not provided, try to derive one from the authenticated app user.
     if (!numericUserId && firebase_uid) {
       const user = await User.findOne({ firebase_uid }).lean();
 
       if (user) {
         try {
-          const ml = await import("@/lib/recommender");
-          const getKnownUserIds =
-            ml.getKnownUserIds ||
-            (ml.default && ml.default.getKnownUserIds);
+          // Load ML service from external directory
+          const mlServicePath = path.resolve(process.cwd(), "..", "ml", "recommender.js");
+          const ml = require(mlServicePath);
+          const { getKnownUserIds } = ml;
 
           if (getKnownUserIds) {
             const knownIds = getKnownUserIds();
@@ -54,7 +44,7 @@ export async function GET(req) {
             }
           }
         } catch (e) {
-          console.error("❌ Failed to map user to MovieLens id:", e);
+          console.error("Failed to map user to ML user id:", e);
         }
       }
     }
@@ -67,29 +57,25 @@ export async function GET(req) {
       );
     }
 
-    // 🟣 Use MovieLens-based recommender to rank categories, then sort events,
-    //     optionally boosted by per-category click preferences.
+    //  Use ML recommender to rank categories, then sort events, optionally boosted by per-category click preferences.
     try {
-      const ml = await import("@/lib/recommender");
-      const impl =
-        ml.getRecommendedCategories ||
-        (ml.default && ml.default.getRecommendedCategories);
-      const implVerbose =
-        ml.getRecommendedCategoriesVerbose ||
-        (ml.default && ml.default.getRecommendedCategoriesVerbose);
+      // Load ML service from external directory
+      const mlServicePath = path.resolve(process.cwd(), "..", "ml", "recommender.js");
+      const ml = require(mlServicePath);
+      const { getRecommendedCategories, getRecommendedCategoriesVerbose } = ml;
 
-      if (!impl) {
+      if (!getRecommendedCategories) {
         throw new Error("Recommender implementation not found");
       }
 
       // Prefer verbose stats when available so we can expose richer metadata
-      const verbose = implVerbose
-        ? await implVerbose(numericUserId, top)
+      const verbose = getRecommendedCategoriesVerbose
+        ? await getRecommendedCategoriesVerbose(numericUserId, top)
         : null;
 
       const categoryOrder = verbose
         ? verbose.map((c) => c.category)
-        : await impl(numericUserId, top);
+        : await getRecommendedCategories(numericUserId, top);
 
       // Highest-ranked category should get the highest base score
       const baseScore = categoryOrder.length;
@@ -138,7 +124,7 @@ export async function GET(req) {
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     } catch (e) {
-      console.error("❌ ML recommender error:", e);
+      console.error("ML service error:", e);
       // Fallback: return unsorted events so the UI still works
       return new Response(
         JSON.stringify({ success: true, events }),
@@ -146,7 +132,7 @@ export async function GET(req) {
       );
     }
   } catch (error) {
-    console.error("❌ Recommendation API Error:", error);
+    console.error("Recommendation API Error:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json" } }
