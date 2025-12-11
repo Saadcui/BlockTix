@@ -28,13 +28,12 @@ export default function Dashboard() {
   }, [user]);
 
   const now = new Date();
-const upcomingTickets = tickets.filter(
-  (t) => t.eventId?.date && new Date(t.eventId.date) >= now
-);
-const pastTickets = tickets.filter(
-  (t) => t.eventId?.date && new Date(t.eventId.date) < now
-);
-
+  const upcomingTickets = tickets.filter(
+    (t) => t.eventId?.date && new Date(t.eventId.date) >= now
+  );
+  const pastTickets = tickets.filter(
+    (t) => t.eventId?.date && new Date(t.eventId.date) < now
+  );
 
   const totalSpent = tickets.reduce(
     (sum, t) => sum + (t.eventId?.price || 0),
@@ -68,7 +67,7 @@ const pastTickets = tickets.filter(
           {event.event}
         </h4>
         <p className="text-gray-600 text-sm mt-1">
-        Date: {new Date(event.date).toLocaleDateString()}
+          Date: {new Date(event.date).toLocaleDateString()}
         </p>
         <p className="text-gray-600 text-sm">Time: {event.time}</p>
         <p className="text-purple-600 font-medium mt-2 text-sm">
@@ -80,7 +79,6 @@ const pastTickets = tickets.filter(
 
   return (
     <ProtectedRoute>
-      <div className="p-6 sm:p-8 min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-pink-200">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Tickets</h1>
@@ -126,6 +124,7 @@ const pastTickets = tickets.filter(
             >
               Upcoming ({upcomingTickets.length})
             </button>
+
             <button
               onClick={() => setActiveTab("past")}
               className={`flex-1 min-w-[140px] text-center px-6 py-2 rounded-full font-medium transition-all duration-300 ease-in-out ${
@@ -151,7 +150,8 @@ const pastTickets = tickets.filter(
                     No Upcoming Events
                   </h3>
                   <p className="text-gray-600 mb-5">
-                    You don't have any upcoming events. Discover new ones to attend!
+                    You don't have any upcoming events. Discover new ones to
+                    attend!
                   </p>
                   <button
                     onClick={() => router.push("/discover")}
@@ -161,7 +161,7 @@ const pastTickets = tickets.filter(
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8 place-items-center">
+                <div className="flex flex-wrap gap-4 justify-start">
                   {upcomingTickets.map((ticket) => (
                     <TicketCard key={ticket._id} ticket={ticket} />
                   ))}
@@ -177,7 +177,7 @@ const pastTickets = tickets.filter(
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8 place-items-center">
+              <div className="flex flex-wrap gap-4 justify-start">
                 {pastTickets.map((ticket) => (
                   <TicketCard key={ticket._id} ticket={ticket} />
                 ))}
@@ -185,7 +185,6 @@ const pastTickets = tickets.filter(
             )}
           </div>
         )}
-      </div>
     </ProtectedRoute>
   );
 }
