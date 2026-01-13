@@ -89,21 +89,21 @@ export default function Dashboard() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-          <div className="bg-white/60 backdrop-blur-md border border-purple-100/40 rounded-2xl shadow-md p-6 flex flex-col items-center">
+          <div className="bg-white/20 backdrop-blur-md border border-purple-100/40 rounded-2xl shadow-md p-6 flex flex-col items-center">
             <p className="text-gray-600">Total Tickets</p>
             <h3 className="text-3xl font-bold text-purple-600 mt-1">
               {tickets.length}
             </h3>
           </div>
 
-          <div className="bg-white/60 backdrop-blur-md border border-purple-100/40 rounded-2xl shadow-md p-6 flex flex-col items-center">
+          <div className="bg-white/20 backdrop-blur-md border border-purple-100/40 rounded-2xl shadow-md p-6 flex flex-col items-center">
             <p className="text-gray-600">Upcoming Events</p>
             <h3 className="text-3xl font-bold text-purple-600 mt-1">
               {upcomingTickets.length}
             </h3>
           </div>
 
-          <div className="bg-white/60 backdrop-blur-md border border-purple-100/40 rounded-2xl shadow-md p-6 flex flex-col items-center">
+          <div className="bg-white/20 backdrop-blur-md border border-purple-100/40 rounded-2xl shadow-md p-6 flex flex-col items-center">
             <p className="text-gray-600">Total Spent</p>
             <h3 className="text-3xl font-bold text-purple-600 mt-1">
               Rs {totalSpent}
@@ -113,13 +113,13 @@ export default function Dashboard() {
 
         {/* Tabs */}
         <div className="w-full mt-10 mb-6">
-          <div className="flex w-full bg-white/40 backdrop-blur-md border border-purple-100/40 p-1 rounded-full">
+          <div className="flex w-full bg-white/10 backdrop-blur-md border border-purple-100/40 p-1 rounded-full">
             <button
               onClick={() => setActiveTab("upcoming")}
               className={`flex-1 min-w-[140px] text-center px-6 py-2 rounded-full font-medium transition-all duration-300 ease-in-out ${
                 activeTab === "upcoming"
                   ? "bg-purple-500 text-white shadow-md"
-                  : "text-gray-700 hover:text-purple-600"
+                  : "bg-white/20 hover:text-purple-600"
               }`}
             >
               Upcoming ({upcomingTickets.length})
@@ -130,7 +130,7 @@ export default function Dashboard() {
               className={`flex-1 min-w-[140px] text-center px-6 py-2 rounded-full font-medium transition-all duration-300 ease-in-out ${
                 activeTab === "past"
                   ? "bg-purple-500 text-white shadow-md"
-                  : "text-gray-700 hover:text-purple-600"
+                  : "bg-white/20 hover:text-purple-600"
               }`}
             >
               Past ({pastTickets.length})

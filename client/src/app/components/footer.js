@@ -1,36 +1,100 @@
-import React from 'react'
+import React from 'react';
 
 function Footer() {
   return (
-    <footer  className="bg-white/20 backdrop-blur-md">
-      <div className='flex flex-col sm:flex-row  flex-wrap  justify-between p-5'>
-        <div className='flex-1'>
-          <h2>BlockTix</h2>
-          <p className='text-sm font-semibold sm:w-[300px]'>Decentralized event ticketing platform with blockchain security</p>
-        </div>
-        <div className='flex-1'>
-          <h2>Users</h2>
-          <ul className='list-none'>
-            <li><a href="/discover" className='text-sm font-semibold no-underline text-black hover:text-[#7C3AED]'>Discover Events</a></li>
-            <li><a href="/dashboard/organizer" className='text-sm font-semibold no-underline text-black hover:text-[#7C3AED]'>Create Event</a></li>
-            <li><a href="/wallet" className='text-sm font-semibold no-underline text-black hover:text-[#7C3AED]'>Wallet Setup</a></li>
-          </ul>
-        </div>
-        <div className='flex-1'>
-          <h2>Support</h2>
-          <ul className='list-none'>
-            <li><a href="/help" className='text-sm no-underline text-black hover:text-[#7C3AED] font-semibold'>Help Center</a></li>
-            <li><a href="/faq" className='text-sm no-underline text-black hover:text-[#7C3AED] font-semibold'  >FAQ</a></li>
-            <li><a href="/contact" className='text-sm no-underline text-black hover:text-[#7C3AED] font-semibold' >Contact Us</a></li>
+    <footer className="bg-white/30 backdrop-blur-xl border-t border-white/40 pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        
+        {/* --- MAIN GRID SECTION --- */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8 mb-12">
+          
+          {/* Column 1: Brand & Description */}
+          <div className="col-span-1 md:col-span-2">
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-4">
+              Block<span className="text-[#7C3AED]">Tix</span>
+            </h2>
+            <p className="text-gray-600 text-sm leading-relaxed max-w-sm mb-6">
+              The Decentralized event ticketing platform. We use blockchain security to eliminate fraud, scalping, and ensure your tickets are truly yours.
+            </p>
 
-          </ul>
+            
+            {/* Social Icons (Raw SVGs - No External Library Needed) */}
+            <div className="flex space-x-4">
+              {/* Twitter / X */}
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/50 hover:bg-[#7C3AED] text-gray-600 hover:text-white transition-all shadow-sm border border-white/50">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" /></svg>
+              </a>
+              {/* LinkedIn */}
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/50 hover:bg-[#7C3AED] text-gray-600 hover:text-white transition-all shadow-sm border border-white/50">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fillRule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clipRule="evenodd" /></svg>
+              </a>
+              {/* GitHub */}
+              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-white/50 hover:bg-[#7C3AED] text-gray-600 hover:text-white transition-all shadow-sm border border-white/50">
+                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" /></svg>
+              </a>
+            </div>
+          </div>
+
+          {/* Column 2: Platform Links */}
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">Platform</h3>
+            <ul className="space-y-3 list-none">
+              <li>
+                <a href="/discover" className="no-underline text-gray-600 hover:text-[#7C3AED] text-sm font-medium transition-colors duration-200">
+                  Discover Events
+                </a>
+              </li>
+              <li>
+                <a href="/dashboard/organizer" className="no-underlinetext-gray-600 hover:text-[#7C3AED] text-sm font-medium transition-colors duration-200">
+                  Organize
+                </a>
+              </li>
+              <li>
+                <a href="/wallet" className="no-underline text-gray-600 hover:text-[#7C3AED] text-sm font-medium transition-colors duration-200">
+                  Wallet Setup
+                </a>
+              </li>
+            
+            </ul>
+          </div>
+
+          {/* Column 3: Support Links */}
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 mb-4">Support</h3>
+            <ul className="space-y-3 list-none">
+              <li>
+                <a href="/help" className="no-underline text-gray-600 hover:text-[#7C3AED] text-sm font-medium transition-colors duration-200">
+                  Help Center
+                </a>
+              </li>
+              <li>
+                <a href="/faq" className="no-underline text-gray-600 hover:text-[#7C3AED] text-sm font-medium transition-colors duration-200">
+                  FAQ
+                </a>
+              </li>
+              <li>
+                <a href="/contact" className="no-underline text-gray-600 hover:text-[#7C3AED] text-sm font-medium transition-colors duration-200">
+                  Contact Us
+                </a>
+              </li>
+              
+            </ul>
+          </div>
         </div>
-      </div>
-      <div>
-        <p className='text-center text-sm'>© 2025 BlockTix. All rights reserved.</p>
+
+        {/* --- BOTTOM BAR --- */}
+        <div className="pt-8 mt-8 border-t border-gray-200/60 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-gray-500 text-sm mb-4 md:mb-0">
+            © {new Date().getFullYear()} BlockTix. All rights reserved.
+          </p>
+          <div className="flex space-x-6">
+            <a href="#" className="text-gray-400 hover:text-[#7C3AED] text-xs transition-colors">Privacy Policy</a>
+            <a href="#" className="text-gray-400 hover:text-[#7C3AED] text-xs transition-colors">Cookie Policy</a>
+          </div>
+        </div>
       </div>
     </footer>
-  )
+  );
 }
 
-export default Footer
+export default Footer;

@@ -1,10 +1,27 @@
 import crypto from "crypto";
 import path from "path";
+import { pathToFileURL } from "url";
 import dbConnect from "@/lib/dbConnect";
 import Event from "@/models/Event";
 import User from "@/models/User";
 import ClickPreference from "@/models/ClickPreference";
 
+
+let mlCache = null;
+let mlLoadErrorLogged = false;
+
+async function loadMlService() {
+  if (mlCache) return mlCache;
+
+  // NOTE: Next.js server bundling turns dynamic require(...) into webpackEmptyContext.
+  // Use runtime import with webpackIgnore so Node loads the file from disk.
+  const mlServicePath = path.resolve(process.cwd(), "..", "ml", "recommender.js");
+  const mlUrl = pathToFileURL(mlServicePath).href;
+
+  const mod = await import(/* webpackIgnore: true */ mlUrl);
+  mlCache = mod?.default ?? mod;
+  return mlCache;
+}
 
 
 export async function GET(req) {
@@ -26,9 +43,7 @@ export async function GET(req) {
 
       if (user) {
         try {
-          // Load ML service from external directory
-          const mlServicePath = path.resolve(process.cwd(), "..", "ml", "recommender.js");
-          const ml = require(mlServicePath);
+          const ml = await loadMlService();
           const { getKnownUserIds } = ml;
 
           if (getKnownUserIds) {
@@ -44,7 +59,10 @@ export async function GET(req) {
             }
           }
         } catch (e) {
-          console.error("Failed to map user to ML user id:", e);
+          if (!mlLoadErrorLogged) {
+            console.error("Failed to map user to ML user id:", e);
+            mlLoadErrorLogged = true;
+          }
         }
       }
     }
@@ -59,9 +77,7 @@ export async function GET(req) {
 
     //  Use ML recommender to rank categories, then sort events, optionally boosted by per-category click preferences.
     try {
-      // Load ML service from external directory
-      const mlServicePath = path.resolve(process.cwd(), "..", "ml", "recommender.js");
-      const ml = require(mlServicePath);
+      const ml = await loadMlService();
       const { getRecommendedCategories, getRecommendedCategoriesVerbose } = ml;
 
       if (!getRecommendedCategories) {
