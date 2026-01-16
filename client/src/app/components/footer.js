@@ -45,7 +45,7 @@ function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/dashboard/organizer" className="no-underlinetext-gray-600 hover:text-[#7C3AED] text-sm font-medium transition-colors duration-200">
+                <a href="/dashboard/organizer" className="no-underline text-gray-600 hover:text-[#7C3AED] text-sm font-medium transition-colors duration-200">
                   Organize
                 </a>
               </li>

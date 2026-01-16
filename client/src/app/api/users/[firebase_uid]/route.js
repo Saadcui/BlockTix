@@ -21,6 +21,7 @@ export async function GET(req, context) {
       name: user.name,
       email: user.email,
       role: user.role,
+      createdAt: user.createdAt
     });
   } catch (error) {
     console.error('Login Fetch Error:', error);

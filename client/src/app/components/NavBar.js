@@ -9,6 +9,9 @@ export default function Navbar() {
 
   const isAuthed = !!user && user.emailVerified;
 
+  
+
+
   // STYLES: Matches Desktop "Sign In/Profile" exactly
   // Added 'backdrop-blur-none' to prevent double blur effect on buttons if needed
   const secondaryBtnClass = "bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold btn w-auto block text-center no-underline my-2";
@@ -46,7 +49,7 @@ export default function Navbar() {
         <div className="hidden md:block">
           {isAuthed ? (
             <div>
-              <Link href={`/profile/${user.role}`} className="bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline transition">Profile</Link>
+              <Link href="/profile" className="bg-transparent text-black hover:bg-[#7C3AED] hover:text-white font-bold py-2 px-4 rounded my-2 w-full no-underline transition">Profile</Link>
               <button onClick={logout} className="btn w-auto no-underline m-2">Log Out</button>
             </div>
           ) : (
@@ -103,7 +106,7 @@ export default function Navbar() {
             {/* Mobile Auth Buttons */}
             {isAuthed ? (
               <>
-                <Link href={`/profile/${user.role}`} onClick={() => setIsMobileMenuOpen(false)} className={secondaryBtnClass}>
+                <Link href='/profile' onClick={() => setIsMobileMenuOpen(false)} className={secondaryBtnClass}>
                   Profile
                 </Link>
                 <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className={primaryBtnClass}>
