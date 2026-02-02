@@ -150,7 +150,7 @@ export default function Dashboard() {
                     No Upcoming Events
                   </h3>
                   <p className="text-gray-600 mb-5">
-                    You don't have any upcoming events. Discover new ones to
+                    You do not have any upcoming events. Discover new ones to
                     attend!
                   </p>
                   <button

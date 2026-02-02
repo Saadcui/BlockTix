@@ -310,7 +310,7 @@ function OrganizerDashboard() {
                             </div>
                         </div>
                     ))}
-                    {organizerEvents.length === 0 && <div className="text-center py-10 text-gray-500">You haven't created any events yet.</div>}
+                    {organizerEvents.length === 0 && <div className="text-center py-10 text-gray-500">You have not created any events yet.</div>}
                   </div>
               </div>
             )}
