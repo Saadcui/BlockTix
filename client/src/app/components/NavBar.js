@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 
-export default function Navbar() {
+function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
 
@@ -129,3 +129,5 @@ export default function Navbar() {
     </nav>
   );
 }
+
+export default Navbar;
