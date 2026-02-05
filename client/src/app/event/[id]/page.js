@@ -60,7 +60,25 @@ function Event() {
     if (id) fetchEvent();
   }, [id]);
 
-  if (loading) return <p className="p-6 text-gray-500">Loading event...</p>;
+  if (loading) {
+    return (
+      <div className="min-h-screen animate-pulse">
+        {/* Hero Skeleton */}
+        <div className="h-[500px] w-full bg-gray-200" />
+        <div className="mx-auto max-w-7xl px-4 py-12">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <div className="h-64 rounded-3xl bg-gray-100" />
+            </div>
+            <div className="lg:col-span-1">
+              <div className="h-96 rounded-3xl bg-gray-100" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (error) return <p className="p-6 text-red-500">Error: {error}</p>;
   if (!event) return <p className="p-6">No event found.</p>;
 
@@ -116,7 +134,7 @@ function Event() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
           {/* About Section */}
           <div className="lg:col-span-2">
-            <div className="rounded-3xl bg-white/10 backdrop-blur-md p-10 shadow-lg transition hover:shadow-2xl">
+            <div className="rounded-3xl bg-white/10 backdrop-blur-md p-10 shadow-lg transition hover:shadow-2xl border">
               <h3 className="mb-6 text-3xl font-bold text-gray-900">
                 About This Event
               </h3>
