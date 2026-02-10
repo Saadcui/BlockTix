@@ -3,9 +3,9 @@
 'use client';
 
 import { AuthProvider } from '@/context/AuthContext';
-import Navbar from '@/app/components/NavBar';
+import Navbar from './components/NavBar';
+import Footer from './components/FooterPage';
 import '../styles/globals.css';
-import Footer from '@/app/components/Footer';
 import { Toaster } from 'react-hot-toast';
 
 
@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <Navbar />
           {children}
-          <Footer />
+          <Footer/>
         </AuthProvider>
 
       </body>

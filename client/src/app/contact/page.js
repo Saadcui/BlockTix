@@ -49,7 +49,7 @@ function Contact() {
         <div className="text-center mb-16">
           <span className="text-violet-600 font-bold tracking-widest uppercase text-sm">Get in touch</span>
           <h1 className="text-5xl md:text-6xl font-black text-gray-900 mt-4 mb-6 tracking-tight">
-            We'd love to <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">hear from you.</span>
+            We Would love to <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">hear from you.</span>
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto font-medium">
             Have questions about BlockTix? Our team is here to help you secure the future of ticketing.

@@ -70,7 +70,7 @@ export default function ResetPage() {
         />
 
         <label className="text-sm">
-          Don't have an account? <Link href="/signup">Sign up</Link>
+          Dont have an account? <Link href="/signup">Sign up</Link>
         </label>
 
         <button

@@ -79,7 +79,7 @@ export default function LoginPage() {
           required
         />
 
-        <label className='text-sm'>Don't have an account? <Link href="/signup">Sign up</Link></label>
+        <label className='text-sm'>Dont have an account? <Link href="/signup">Sign up</Link></label>
         <br />
         <label className='text-sm color-[#7C3AED]'><Link href="/resetPassword">Forgot Password?</Link></label>
 
