@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
+import ChatbotRag from './components/Ragchatbot';
 
 export default function Home() {
   const [events, setEvents] = useState([]); // All fetched events
@@ -251,6 +252,10 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Chatbot Section */}
+      <ChatbotRag user={user} />
+      
     </div>
   );
 }
