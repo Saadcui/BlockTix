@@ -1,15 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import useEventStore from '@/store/useEventStore';
 
 export default function DiscoverPage() {
-  const [events, setEvents] = useState([]); // All events
-  const [filteredEvents, setFilteredEvents] = useState([]); // Filtered events
+  // Global State from Zustand
+  const { events, fetchEvents, loading } = useEventStore();
+  
+  // UI States
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [location, setLocation] = useState('');
+  
   const { user } = useAuth();
   const router = useRouter();
 
@@ -24,30 +28,13 @@ export default function DiscoverPage() {
     'Other',
   ];
 
-  //  Fetch events through the unified MovieLens-backed recommendations API.
-  //  Logged-in users are mapped to a MovieLens user id on the server so their
-  //  event ordering reflects CSV-based preferences.
+  // 🔹 Fetch events once per session via the store
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const query = user?.uid ? `?firebase_uid=${user.uid}` : '';
-        const res = await fetch(`/api/recommendations${query}`);
+    fetchEvents(user?.uid);
+  }, [user, fetchEvents]);
 
-        const data = await res.json();
-        if (data.success) {
-          setEvents(data.events);
-          setFilteredEvents(data.events);
-        }
-      } catch (error) {
-        console.error('Failed to fetch events:', error);
-      }
-    };
-
-    fetchEvents();
-  }, [user]);
-
-  // 🔹 Apply filters (purely client-side, no API calls)
-  useEffect(() => {
+  // 🔹 Apply filters (Calculated automatically when dependencies change)
+  const filteredEvents = useMemo(() => {
     let result = [...events];
 
     if (search.trim()) {
@@ -66,14 +53,13 @@ export default function DiscoverPage() {
       result = result.filter((e) => locRegex.test(e.location || ''));
     }
 
-    setFilteredEvents(result);
+    return result;
   }, [search, category, location, events]);
 
-  // 🔹 Handle click on event and record a simple preference signal
+  // 🔹 Handle click on event and record preference signal
   const handleEventClick = async (event) => {
     router.push(`/event/${event.eventId}`);
 
-    // Fire-and-forget preference update; we don't block navigation on this.
     if (user?.uid && event.category) {
       try {
         fetch('/api/preferences/click', {
@@ -85,7 +71,7 @@ export default function DiscoverPage() {
           }),
         }).catch(() => {});
       } catch {
-        // Intentionally ignore errors here
+        // Intentionally ignore errors
       }
     }
   };
@@ -157,7 +143,6 @@ export default function DiscoverPage() {
               setSearch('');
               setCategory('All');
               setLocation('');
-              setFilteredEvents(events);
             }}
             className="btn font-bold"
           >
@@ -168,7 +153,23 @@ export default function DiscoverPage() {
 
       {/* Event Grid */}
       <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg">
-        {filteredEvents.length === 0 ? (
+        {loading && events.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-white/10 backdrop-blur-md rounded-lg shadow animate-pulse h-64 overflow-hidden"
+              >
+                <div className="h-40 bg-gray-200/40" />
+                <div className="p-4">
+                  <div className="h-5 bg-gray-200/40 rounded mb-3 w-3/4" />
+                  <div className="h-4 bg-gray-200/40 rounded mb-2 w-1/2" />
+                  <div className="h-4 bg-gray-200/40 rounded w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredEvents.length === 0 && (search.trim() || category !== 'All' || location.trim()) ? (
           <p className="text-center text-gray-500 text-lg">
             No events match your filters.
           </p>
@@ -193,7 +194,6 @@ export default function DiscoverPage() {
                   className="bg-white/10 backdrop-blur-md rounded-lg shadow hover:shadow-lg transition-shadow duration-300 overflow-hidden cursor-pointer"
                   onClick={() => handleEventClick(event)}
                 >
-                  {/* Event Image */}
                   <div className="h-40 bg-gradient-to-br from-purple-100 to-gray-100 flex items-center justify-center">
                     {event.image ? (
                       <img
@@ -206,7 +206,6 @@ export default function DiscoverPage() {
                     )}
                   </div>
 
-                  {/* Event Info */}
                   <div className="p-4">
                     <h3 className="text-xl font-bold text-gray-900 truncate">
                       {event.event}
