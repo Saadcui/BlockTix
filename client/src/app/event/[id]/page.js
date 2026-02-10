@@ -11,6 +11,7 @@ function Event() {
   const id = params.id;
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isBuying, setIsBuying] = useState(false);
   const [error, setError] = useState(null);
   const { user } = useAuth();
 
@@ -20,6 +21,7 @@ function Event() {
       return;
     }
     try {
+      setIsBuying(true);
       const res = await fetch('/api/tickets', {
         method: 'POST',
         headers: {
@@ -41,6 +43,8 @@ function Event() {
       await fetchEvent();
     } catch (err) {
       toast.error('Error: ' + err.message);
+    } finally {
+      setIsBuying(false);
     }
   }
 
@@ -133,7 +137,7 @@ function Event() {
           <div className="lg:col-span-1">
             <div className="sticky top-8 rounded-3xl border border-purple-100 bg-white/10 p-8 shadow-xl backdrop-blur-md">
               <h2 className="mb-8 text-center text-2xl font-bold text-gray-900">
-              Get Tickets
+                Get Tickets
               </h2>
 
               {/* Price */}
@@ -169,9 +173,8 @@ function Event() {
                   <div
                     className="h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
                     style={{
-                      width: `${
-                        (event.remainingTickets / event.totalTickets) * 100
-                      }%`,
+                      width: `${(event.remainingTickets / event.totalTickets) * 100
+                        }%`,
                     }}
                   />
                 </div>
@@ -180,11 +183,10 @@ function Event() {
               {/* Buy Button */}
               <button
                 className={`w-full transform rounded-xl py-4 px-6 text-lg font-semibold shadow-lg transition-all duration-300 hover:-translate-y-1 
-                ${
-                  event.remainingTickets > 0
+                ${event.remainingTickets > 0
                     ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:shadow-2xl'
                     : 'cursor-not-allowed bg-gray-400 text-gray-100'
-                }`}
+                  }`}
                 onClick={handleBuyTicket}
                 disabled={event.remainingTickets === 0}
               >
@@ -203,6 +205,38 @@ function Event() {
           </div>
         </div>
       </div>
+
+      {/* Full-Screen Loading Overlay */}
+      {isBuying && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/60 backdrop-blur-xl transition-all duration-500">
+          <div className="relative flex flex-col items-center p-12 rounded-3xl bg-white/10 border border-white/20 shadow-2xl overflow-hidden group">
+            {/* Animated Background Pulse */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 animate-pulse"></div>
+
+            {/* Main Spinner */}
+            <div className="relative">
+              <div className="h-24 w-24 rounded-full border-t-4 border-b-4 border-purple-500 animate-spin"></div>
+              <div className="absolute inset-0 h-24 w-24 rounded-full border-r-4 border-l-4 border-pink-500 animate-spin duration-1000 opacity-50"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <span className="text-3xl">🎟️</span>
+              </div>
+            </div>
+
+            <h2 className="mt-8 text-2xl font-bold text-white tracking-wide text-center">
+              Minting Your Secured NFT Ticket
+            </h2>
+            <p className="mt-4 text-purple-200 text-center max-w-xs leading-relaxed animate-bounce">
+              Securing your spot on the blockchain... This may take a few seconds.
+            </p>
+
+            <div className="mt-8 flex gap-2">
+              <div className="h-2 w-2 rounded-full bg-purple-500 animate-bounce [animation-delay:-0.3s]"></div>
+              <div className="h-2 w-2 rounded-full bg-purple-400 animate-bounce [animation-delay:-0.15s]"></div>
+              <div className="h-2 w-2 rounded-full bg-purple-300 animate-bounce"></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Event from "@/models/Event";
 import Ticket from "@/models/Ticket";
 import dbConnect from '@/lib/dbConnect';
+import { mintTicketNFT } from '@/lib/blockchain';
 
 
 //route for creating tickets
@@ -11,7 +12,7 @@ export async function POST(req) {
 
     const { eventId, userId } = await req.json();
 
-  
+
     const event = await Event.findById(eventId);
     if (!event) {
       return new Response(JSON.stringify({ error: "Event not found" }), { status: 404 });
@@ -26,21 +27,38 @@ export async function POST(req) {
       event.earlyBird.soldCount += 1; // track early bird sales
     }
 
-   
+
     if (event.remainingTickets <= 0) {
       return new Response(JSON.stringify({ error: "Tickets sold out" }), { status: 400 });
     }
 
+    const platformWallet = process.env.PLATFORM_CUSTODY_ADDRESS;
+
+    // Mint the NFT
+    let mintResult = { txHash: null, tokenId: null };
+    try {
+      // Internal metadata URL that serves JSON for the NFT
+      const metadataUri = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/tickets/metadata/${eventId}`;
+      mintResult = await mintTicketNFT(platformWallet, metadataUri);
+    } catch (mintError) {
+      console.error("Minting failed:", mintError);
+      // We still create the ticket but mark it as failed/pending
+    }
+
     const ticket = new Ticket({
       eventId: event._id,
-      userId, 
+      userId,
+      tokenId: mintResult.tokenId,
+      txHash: mintResult.txHash,
+      mintStatus: mintResult.tokenId ? "minted" : "failed",
+      custodial: true,
+      ownerWallet: platformWallet
     });
     await ticket.save();
 
     event.remainingTickets -= 1;
     event.earlyBird.soldCount = (event.earlyBird.soldCount || 0) + 1; // increment sold count
 
-  
     await event.save();
 
     return new Response(JSON.stringify({ success: true, ticket }), { status: 201 });
@@ -56,7 +74,7 @@ export async function GET(req) {
     await dbConnect();
 
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId"); 
+    const userId = searchParams.get("userId");
 
 
     if (!userId) {
@@ -64,8 +82,8 @@ export async function GET(req) {
     }
 
     const tickets = await Ticket.find({ userId })
-      .populate("eventId", "event date time location price image remainingTickets") 
-      .sort({ createdAt: -1 }); 
+      .populate("eventId", "event date time location price image remainingTickets")
+      .sort({ createdAt: -1 });
 
     return NextResponse.json({ tickets }, { status: 200 });
   } catch (error) {

@@ -12,7 +12,7 @@ const ticketSchema = new mongoose.Schema({
     ref: "Event",
     required: true
   },
-  userId: {   
+  userId: {
     type: String,
     required: true
   },
@@ -24,6 +24,40 @@ const ticketSchema = new mongoose.Schema({
     type: String,
     enum: ["valid", "used", "canceled"],
     default: "valid"
+  },
+  tokenId: {
+    type: Number,
+    unique: true,
+    sparse: true // Allows nulls for failed mints
+  },
+  mintStatus: {
+    type: String,
+    enum: ["pending", "minted", "failed"],
+    default: "pending"
+  },
+  txHash: { type: String }, // The blockchain transaction hash
+  metadataUri: { type: String }, // Link to IPFS or API JSON
+  custodial: {
+    type: Boolean,
+    default: true
+  },
+  ownerWallet: {
+    type: String, // Platform wallet when custodial, user wallet when claimed
+  },
+  isRedeemed: {
+    type: Boolean,
+    default: false
+  },
+  qrData: {
+    type: Object // Stores signed QR data and expiration
+  },
+  isForResale: {
+    type: Boolean,
+    default: false
+  },
+  resalePrice: {
+    type: Number,
+    min: 0
   }
 }, { timestamps: true });
 

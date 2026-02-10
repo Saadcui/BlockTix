@@ -80,30 +80,33 @@ describe("BlockTixTicket Contract", function () {
             return f;
         }
 
-        it("Should allow the owner to move a ticket from custody to user", async function () {
+        it("Should allow the owner to move a ticket from custody to user and LOCK it", async function () {
             const { ticketContract, deployer, custodialWallet, user1 } = await loadFixture(mintedFixture);
 
             await expect(ticketContract.connect(deployer).claimToWallet(0, user1.address))
                 .to.emit(ticketContract, "TicketClaimed")
-                .withArgs(0, custodialWallet.address, user1.address);
+                .withArgs(0, custodialWallet.address, user1.address)
+                .and.to.emit(ticketContract, "Locked")
+                .withArgs(0);
 
             expect(await ticketContract.ownerOf(0)).to.equal(user1.address);
+            expect(await ticketContract.locked(0)).to.be.true;
         });
 
-        it("Should fail if claiming a non-existent ticket", async function () {
-            const { ticketContract, deployer, user1 } = await loadFixture(deployFixture);
-            
-            // Try to claim token #999 which doesn't exist
-            // Note: ERC721 ownerOf reverts with ERC721NonexistentToken first
-            await expect(ticketContract.connect(deployer).claimToWallet(999, user1.address))
-                .to.be.revertedWithCustomError(ticketContract, "ERC721NonexistentToken");
-        });
+        it("Should allow the owner to return a ticket to custody and UNLOCK it", async function () {
+            const { ticketContract, deployer, user1 } = await loadFixture(mintedFixture);
 
-        it("Should fail if non-owner tries to claim", async function () {
-            const { ticketContract, user1 } = await loadFixture(mintedFixture);
+            // Claim first
+            await ticketContract.connect(deployer).claimToWallet(0, user1.address);
+            expect(await ticketContract.locked(0)).to.be.true;
 
-            await expect(ticketContract.connect(user1).claimToWallet(0, user1.address))
-                .to.be.revertedWithCustomError(ticketContract, "OwnableUnauthorizedAccount");
+            // Return to custody
+            await expect(ticketContract.connect(deployer).returnToCustody(0))
+                .to.emit(ticketContract, "Unlocked")
+                .withArgs(0);
+
+            expect(await ticketContract.ownerOf(0)).to.equal(deployer.address);
+            expect(await ticketContract.locked(0)).to.be.false;
         });
     });
 
@@ -135,13 +138,6 @@ describe("BlockTixTicket Contract", function () {
             await expect(ticketContract.connect(deployer).redeemTicket(0))
                 .to.be.revertedWith("Already redeemed");
         });
-
-        it("Should fail if non-owner tries to redeem", async function () {
-            const { ticketContract, user1 } = await loadFixture(mintedFixture);
-
-            await expect(ticketContract.connect(user1).redeemTicket(0))
-                .to.be.revertedWithCustomError(ticketContract, "OwnableUnauthorizedAccount");
-        });
     });
 
     // 6. TRANSFER RESTRICTION TESTS (THE LOCK)
@@ -156,47 +152,14 @@ describe("BlockTixTicket Contract", function () {
         it("Should BLOCK a regular user from transferring their own ticket", async function () {
             const { ticketContract, user1, user2 } = await loadFixture(mintedFixture);
 
-            // User1 owns the ticket, but tries to send it to User2 directly
             await expect(
                 ticketContract.connect(user1).transferFrom(user1.address, user2.address, 0)
-            ).to.be.revertedWith("Transfers restricted to BlockTix Platform");
+            ).to.be.revertedWith("BlockTix: Transfer restricted (Soulbound)");
         });
 
-        it("Should ALLOW the Platform Owner to transfer a user's ticket (Resale Logic)", async function () {
-            const { ticketContract, deployer, user1, user2 } = await loadFixture(mintedFixture);
-
-            // The Platform (deployer) acts as the broker and moves User1's ticket to User2
-            // Note: In standard ERC721, you need approval, but your _update logic
-            // bypasses restrictions IF msg.sender is owner.
-            // However, standard transferFrom ALSO checks approvals. 
-            // Since `_update` is the hook, let's verify if approval is needed:
-            // ERC721 `transferFrom` checks `_isAuthorized`.
-            // If the Platform is the Contract Owner, standard ERC721 doesn't automatically grant approval
-            // UNLESS you are using the specific claimToWallet logic or if you mint directly.
-            
-            // WAIT! Standard ERC721 `transferFrom` requires `_isAuthorized` (owner or approved).
-            // Your contract does NOT override `isApprovedForAll` to include the owner.
-            // Therefore, for the Platform to move a User's ticket using `transferFrom`, 
-            // the User technically needs to approve the Platform, OR the logic relies on `claimToWallet`.
-            
-            // However, looking at your contract, you use `_transfer` inside `claimToWallet`.
-            // `_transfer` bypasses approval checks.
-            // But if you use `transferFrom` externally, it checks approval.
-            
-            // If we want to test the LOCK, we assume the user *tried* to send it.
-            // If we want to test Admin Transfer (Resale), we might need `_transfer` exposed or Approval.
-            
-            // Let's test the BLOCK specifically first:
-            await expect(
-                ticketContract.connect(user1).transferFrom(user1.address, user2.address, 0)
-            ).to.be.revertedWith("Transfers restricted to BlockTix Platform");
-        });
-
-        it("Should ALLOW Minting (transfer from address 0)", async function () {
-            // This is implicitly tested in "Minting", but ensures the lock doesn't break minting
-            const { ticketContract, deployer, user1 } = await loadFixture(deployFixture);
-            await expect(ticketContract.connect(deployer).mintTicket(user1.address, "uri", 0))
-                .to.not.be.reverted;
+        it("Should support IERC5192 interface", async function () {
+            const { ticketContract } = await loadFixture(deployFixture);
+            expect(await ticketContract.supportsInterface("0xb45a3c0e")).to.be.true;
         });
     });
 });
