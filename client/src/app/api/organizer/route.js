@@ -9,13 +9,15 @@ export async function POST(req) {
 
         
         await dbConnect();
-        const { event, date, time, location, category, price, totalTickets, image, organizerId, earlyBird } = await req.json();
+        const { event, date, time, location, latitude, longitude, category, price, totalTickets, image, organizerId, earlyBird } = await req.json();
 
         const newEvent = await Event.create({
         event,
         date,
         time,
         location,
+        latitude,
+        longitude,
         category,
         price,
         totalTickets,

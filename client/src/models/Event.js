@@ -64,7 +64,13 @@ const eventSchema = new mongoose.Schema({
     endDate: { type: Date },
     maxTickets: { type: Number, min: 1 },
     soldCount: { type: Number, default: 0 }
-  }
+  },
+    latitude: {
+      type: Number,
+    },
+    longitude: {
+      type: Number,
+    },
 }, { timestamps: true });
 
 
