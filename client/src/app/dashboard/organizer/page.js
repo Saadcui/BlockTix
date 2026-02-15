@@ -1,11 +1,12 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import ProtectedRoute from '../../components/ProtectedRoute'; // Adjust path
-import { useAuth } from '@/context/AuthContext'; // Adjust path
-import toast from 'react-hot-toast'; // Assuming you use this based on your snippet
+import ProtectedRoute from '../../components/ProtectedRoute'; 
+import { useAuth } from '@/context/AuthContext';
+import toast from 'react-hot-toast'; 
+import dynamic from "next/dynamic";
 
-// --- ICONS ---
+// ICONS
 const DashboardIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>);
 const EventIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
 const PlusIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>);
@@ -14,10 +15,17 @@ const UsersIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" heig
 const LogOutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>);
 const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>);
 
+
+ const LocationPicker = dynamic(
+  () => import("@/app/components/LocationPicker"),
+  { ssr: false }
+);
+
+
 function OrganizerDashboard() {
   const router = useRouter();
   const { user: authUser, logout } = useAuth();
-
+  const [coordinates, setCoordinates] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [organizerEvents, setOrganizerEvents] = useState([]);
@@ -83,9 +91,14 @@ function OrganizerDashboard() {
   };
 
   // --- ACTIONS ---
+
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     if (!authUser?.uid) return toast.error("Not authenticated");
+    if (!coordinates) {
+      return toast.error("Please select location on map");
+    }
+
 
     try {
       const payload = {
@@ -93,6 +106,8 @@ function OrganizerDashboard() {
         date: formData.date,
         time: formData.time,
         location: formData.location,
+        latitude: coordinates.lat,
+        longitude: coordinates.lng,
         category: formData.category,
         price: Number(formData.price),
         totalTickets: Number(formData.totalTickets),
@@ -338,10 +353,29 @@ function OrganizerDashboard() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Location</label>
-                                <input required type="text" className={glassInput} placeholder="Address"
-                                    value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
-                            </div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+                          Location
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          className={glassInput}
+                          placeholder="Address"
+                          value={formData.location}
+                          onChange={e =>
+                            setFormData({ ...formData, location: e.target.value })
+                          }
+                        />
+                        <div className="mt-4">
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+                            Select Event Location on Map
+                          </label>
+
+                          <div className="w-full">
+                            <LocationPicker setCoordinates={setCoordinates} />
+                          </div>
+                        </div>
+                      </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
