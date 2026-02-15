@@ -1,0 +1,111 @@
+{
+    "platform": {
+        "name": "BlockTix",
+        "description": "A decentralized event ticketing platform using blockchain technology",
+        "features": [
+            "Blockchain-secured tickets prevent fraud and duplication",
+            "QR code-based entry system for events",
+            "Fair resale prevention through smart contracts",
+            "Real-time event discovery and recommendations",
+            "Secure payment processing",
+            "Digital wallet integration"
+        ]
+    },
+    "navigation": {
+        "discover": {
+            "path": "/discover",
+            "description": "Browse all available events",
+            "login_required": false
+        },
+        "my_tickets": {
+            "path": "/dashboard/user",
+            "description": "View purchased tickets and event history",
+            "login_required": true
+        },
+        "create_event": {
+            "path": "/dashboard/organizer",
+            "description": "Create and manage events (organizers only)",
+            "login_required": true
+        },
+        "login": {
+            "path": "/login",
+            "description": "Sign in to your account"
+        }
+    },
+    "faq": [
+        {
+            "question": "How do I buy tickets?",
+            "answer": "Browse events at the discover page, click on an event you like, select quantity, and complete payment. You must be logged in to purchase."
+        },
+        {
+            "question": "Where are my tickets?",
+            "answer": "Your tickets are in your dashboard at your user dashboard section. You'll also receive them via email."
+        },
+        {
+            "question": "How does blockchain security work?",
+            "answer": "Each ticket is a unique blockchain record that cannot be duplicated or forged, ensuring authenticity and preventing fraud."
+        },
+        {
+            "question": "Can I resell my ticket?",
+            "answer": "Resale policies are set by event organizers. BlockTix uses smart contracts to prevent scalping and ensure fair pricing."
+        },
+        {
+            "question": "What if I forgot my password?",
+            "answer": "Click 'Forgot Password' on the login page, check your email for verification, and follow the reset instructions."
+        },
+        {
+            "question": "My payment failed, what should I do?",
+            "answer": "Verify your card details, check sufficient funds, try a different payment method, or clear your browser cache. Contact support if the issue persists."
+        },
+        {
+            "question": "I didn't receive my ticket",
+            "answer": "Check your email and spam folder. Log in to your user dashboard to view your tickets. If still missing, contact support with your order details."
+        },
+        {
+            "question": "How do I use my QR code?",
+            "answer": "Open your ticket from your user dashboard or email, and present the QR code at the venue entrance for scanning."
+        },
+        {
+            "question": "How do I login?",
+            "answer": "Click the 'Login' button at the top right of the page or go to the login page to sign in to your account."
+        }
+    ],
+    "troubleshooting": {
+        "payment_issues": [
+            "Verify card details are correct",
+            "Check you have sufficient funds",
+            "Try a different payment method",
+            "Clear browser cache and cookies",
+            "Contact support with your order ID"
+        ],
+        "qr_code_issues": [
+            "Check email including spam folder",
+            "Log in and go to My Tickets",
+            "Re-download the ticket",
+            "Ensure good lighting when scanning",
+            "Hold phone steady at entry point"
+        ],
+        "login_issues": [
+            "Click 'Forgot Password' link",
+            "Check email verification",
+            "Clear cookies and cache",
+            "Try a different browser",
+            "Contact support for account recovery"
+        ],
+        "missing_ticket": [
+            "Check email and spam folder",
+            "Log in to My Tickets section",
+            "Verify purchase was successful",
+            "Contact support if still missing"
+        ]
+    },
+    "event_categories": [
+        "Art",
+        "Sports",
+        "Food And Drink",
+        "Education",
+        "Festival",
+        "Music",
+        "Other"
+    ]
+}

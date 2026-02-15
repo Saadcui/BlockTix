@@ -5,6 +5,7 @@
 import { AuthProvider } from '@/context/AuthContext';
 import Navbar from './components/NavBar';
 import Footer from './components/FooterPage';
+import Ragchatbot from './components/Ragchatbot';
 import '../styles/globals.css';
 import { Toaster } from 'react-hot-toast';
 
@@ -16,11 +17,12 @@ export default function RootLayout({ children }) {
         className="bg-cover bg-center bg-no-repeat min-h-screen"
         style={{ backgroundImage: "url('/bg.svg')" }}
       >
-        <Toaster position="top-right" reverseOrder={false} toastOptions={{style: {  marginTop: '4rem' }}} />
+        <Toaster position="top-right" reverseOrder={false} toastOptions={{ style: { marginTop: '4rem' } }} />
         <AuthProvider>
           <Navbar />
           {children}
-          <Footer/>
+          <Ragchatbot />
+          <Footer />
         </AuthProvider>
 
       </body>
