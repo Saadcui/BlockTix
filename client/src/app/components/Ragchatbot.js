@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Minimize2, Maximize2, X, Sparkles, Ticket, Database, HelpCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 
-const RagChatbot = ({ user }) => {
+const RagChatbot = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: user?.name 
+      content: user?.name
         ? `Hi ${user.name}! I'm your BlockTix AI assistant.\n\nI can help you with:\n
         • Finding and exploring events\n
         • Checking ticket prices and availability\n
@@ -51,7 +53,7 @@ const RagChatbot = ({ user }) => {
 
     const userMessage = inputMessage.trim();
     setInputMessage('');
-    
+
     const newUserMessage = { role: 'user', content: userMessage };
     setMessages(prev => [...prev, newUserMessage]);
     setIsLoading(true);
@@ -81,7 +83,7 @@ const RagChatbot = ({ user }) => {
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
         throw new Error(data.error || 'Unknown error');
       }
@@ -89,7 +91,7 @@ const RagChatbot = ({ user }) => {
       const assistantMessage = {
         role: 'assistant',
         content: data.message,
-        context: data.context
+        metadata: data.metadata
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -98,10 +100,10 @@ const RagChatbot = ({ user }) => {
     } catch (error) {
       console.error('Chatbot error:', error);
       setIsConnected(false);
-      
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: "I apologize, but I'm experiencing technical difficulties. Please try again in a moment or contact our support team at support@blocktix.com for immediate assistance." 
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I apologize, but I'm experiencing technical difficulties. Please try again in a moment or contact our support team at support@blocktix.com for immediate assistance."
       }]);
     } finally {
       setIsLoading(false);
@@ -169,10 +171,9 @@ const RagChatbot = ({ user }) => {
   }
 
   return (
-    <div 
-      className={`fixed bottom-6 right-6 bg-white rounded-2xl shadow-2xl z-50 flex flex-col transition-all duration-300 ${
-        isMinimized ? 'w-80 h-16' : 'w-[440px] h-[650px]'
-      }`}
+    <div
+      className={`fixed bottom-6 right-6 bg-white rounded-2xl shadow-2xl z-50 flex flex-col transition-all duration-300 ${isMinimized ? 'w-80 h-16' : 'w-[440px] h-[650px]'
+        }`}
       style={{
         maxHeight: 'calc(100vh - 3rem)',
         maxWidth: 'calc(100vw - 3rem)'
@@ -213,35 +214,34 @@ const RagChatbot = ({ user }) => {
                 key={index}
                 className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  message.role === 'user' 
-                    ? 'bg-gradient-to-br from-blue-500 to-cyan-500' 
-                    : 'bg-gradient-to-br from-indigo-500 to-purple-500'
-                }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.role === 'user'
+                  ? 'bg-gradient-to-br from-blue-500 to-cyan-500'
+                  : 'bg-gradient-to-br from-indigo-500 to-purple-500'
+                  }`}>
                   {message.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
                 </div>
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                    message.role === 'user'
-                      ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white'
-                      : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
-                  }`}
+                  className={`max-w-[75%] rounded-2xl px-4 py-3 ${message.role === 'user'
+                    ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white'
+                    : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
+                    }`}
                 >
                   <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                  {message.role === 'assistant' && message.context && (
+                  {message.role === 'assistant' && message.metadata && (
                     <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500 flex items-center gap-2">
                       <Database className="w-3 h-3" />
                       <span>
-                        {message.context.eventsFound > 0 && `${message.context.eventsFound} events`}
-                        {message.context.eventsFound > 0 && message.context.userTicketsCount > 0 && ' • '}
-                        {message.context.userTicketsCount > 0 && `${message.context.userTicketsCount} tickets`}
+                        {message.metadata.events > 0 && `${message.metadata.events} events found`}
+                        {message.metadata.events > 0 && message.metadata.userTicketsCount > 0 && ' • '}
+                        {message.metadata.userTicketsCount > 0 && `${message.metadata.userTicketsCount} tickets`}
+                        {message.metadata.intent && <span className="ml-2 text-[10px] bg-gray-100 px-1 rounded uppercase tracking-wider">{message.metadata.intent.replace('_', ' ')}</span>}
                       </span>
                     </div>
                   )}
                 </div>
               </div>
             ))}
-            
+
             {isLoading && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">

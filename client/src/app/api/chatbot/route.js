@@ -1,514 +1,385 @@
 import { NextResponse } from 'next/server';
-import { Ollama } from 'ollama';
 import dbConnect from '@/lib/dbConnect';
 import Event from '@/models/Event';
 import User from '@/models/User';
 import Ticket from '@/models/Ticket';
+import knowledgeBase from '@/lib/knowledge_base.json';
 
-const ollama = new Ollama({ host: 'http://localhost:11434' });
+// --- UTILITIES ---
 
-const LLM_MODEL = 'llama3:8b-instruct-q4_0';
-const LLM_TEMPERATURE = 0.1;
+const STOP_WORDS = new Set(['how', 'are', 'you', 'the', 'is', 'at', 'in', 'on', 'of', 'for', 'about', 'tell', 'me', 'please', 'can', 'could', 'would', 'do', 'does', 'it', 'its', 'my', 'your', 'with', 'what',
+  'where', 'when', 'who', 'i', 'was', 'were', 'been', 'be', 'a', 'an', 'and', 'or', 'but', 'so', 'any', 'some', 'every', 'each', 'all', 'hey', 'hi', 'hello', 'yo', 'thanks', 'thank', 'yuo', 'uou', 'uoy', 'uo',
+  'dont', 'get', 'them', 'got', 'me', 'tell', 'about', 'should', 'would', 'could', 'shall', 'will', 'did', 'does', 'do', 'done', 'has', 'have', 'had', 'been', 'being', 'what', 'where', 'who', 'whom', 'whose', 'which', 'why', 'how']);
 
+function getSimilarity(s1, s2) {
+  if (!s1 || !s2) return 0;
+  let longer = s1.toLowerCase();
+  let shorter = s2.toLowerCase();
+  if (s1.length < s2.length) {
+    longer = s2;
+    shorter = s1;
+  }
+  const shorterLength = shorter.length;
+  if (shorterLength === 0) return 1.0;
 
-// SYSTEM PROMPT
+  const costs = new Array();
+  for (let i = 0; i <= longer.length; i++) {
+    let lastValue = i;
+    for (let j = 0; j <= shorter.length; j++) {
+      if (i === 0) costs[j] = j;
+      else {
+        if (j > 0) {
+          let newValue = costs[j - 1];
+          if (longer.charAt(i - 1) !== shorter.charAt(j - 1))
+            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+          costs[j - 1] = lastValue;
+          lastValue = newValue;
+        }
+      }
+    }
+    if (i > 0) costs[shorter.length] = lastValue;
+  }
+  return (longer.length - costs[shorter.length]) / parseFloat(longer.length);
+}
 
-const SYSTEM_PROMPT = `You are BlockTix Support Assistant. BlockTix is an event ticketing platform.
+function cleanTokens(tokens) {
+  return tokens.filter(t => !STOP_WORDS.has(t.toLowerCase()) && t.length > 2);
+}
 
-PLATFORM KNOWLEDGE (always true):
-- Users CAN browse and view events without logging in
-- Users MUST log in to buy tickets, view their purchased tickets, or get recommendations
-- Events page is accessible to everyone at /discover
-- Tickets page requires login at /dashboard/user
-- QR codes are used for event entry
+// --- CORE ENGINE ---
 
-STRICT RULES:
-1. Use ONLY the provided CONTEXT DATA. Never invent events, tickets, dates, prices, or locations.
-2. If STATUS shows "NO TICKETS FOUND" → say user has no tickets
-3. If STATUS shows "NOT LOGGED IN" AND user asks for THEIR tickets → say please log in
-4. If STATUS shows "NO EVENTS FOUND" → say no events were found
-5. For general questions about the platform, use the PLATFORM KNOWLEDGE above
-6. Keep responses SHORT (2-4 sentences max)
-7. Be friendly and helpful
-8. If unclear what user wants, ask them to clarify`;
+// Context Extraction: Remembers the last event the assistant talked about
+function extractContext(history) {
+  if (!history || history.length === 0) return null;
+  for (let i = history.length - 1; i >= 0; i--) {
+    const msg = history[i];
+    if (msg.role === 'assistant' && msg.content) {
+      const eventMatch = msg.content.match(/\*\*([^*]+)\*\*/);
+      if (eventMatch) return { eventName: eventMatch[1].trim() };
+      const listMatch = msg.content.match(/• ([^(\n]+)/);
+      if (listMatch) return { eventName: listMatch[1].trim() };
+    }
+  }
+  return null;
+}
 
+// Intent Detection: Smarter weighting and stop-word resistance
+function detectIntent(query) {
+  const lowerQuery = query.toLowerCase();
+  const allTokens = lowerQuery.split(/\s+/).filter(t => t.length > 0);
+  const coreTokens = cleanTokens(allTokens);
 
-// MAIN API ENDPOINT
+  const scores = {
+    count_events: 0,
+    list_events: 0,
+    my_tickets: 0,
+    recommendations: 0,
+    navigation: 0,
+    troubleshooting: 0,
+    platform_info: 0,
+    conversational: 0,
+    event_details: 0
+  };
 
-export async function POST(req) {
+  const weights = {
+    count_events: { words: ['how many', 'count', 'total', 'number', 'quantity', 'much envents'], weight: 2.5 },
+    list_events: { words: ['show', 'list', 'upcoming', 'browse', 'find', 'discover', 'available', 'concerts', 'events', 'happening'], weight: 2 },
+    my_tickets: { words: ['my tickets', 'my events', 'my orders', 'show my', 'view my', 'i bought', 'purchased', 'ticket history', 'tickets'], weight: 4 },
+    recommendations: { words: ['recommend', 'suggest', 'for me', 'what should i', 'best events', 'popular', 'top events'], weight: 2 },
+    navigation: { words: ['where', 'how do i find', 'how to get', 'access', 'navigate', 'go to', 'page', 'section', 'dashboard', 'wallet', 'profile', 'login', 'signin', 'sign in', 'logout', 'signout', 'sign out'], weight: 2.5 },
+    troubleshooting: { words: ['problem', 'issue', 'error', 'failed', 'not working', 'help', 'broken', 'bug', 'wrong', 'facing'], weight: 2 },
+    platform_info: { words: ['how does', 'what is', 'explain', 'blockchain', 'security', 'work', 'safe', 'secure', 'blocktix', 'refund', 'resale', 'resell', 'purchasing'], weight: 2.5 },
+    conversational: { words: ['hi', 'hello', 'hey', 'thanks', 'thank you', 'ok', 'okay', 'yes', 'no', 'cool', 'great', 'how are', 'uoy', 'uou', 'doing', 'hoa', 'hollo', 'hallo', 'heythere'], weight: 3 },
+    event_details: { words: ['when is', 'where is', 'date of', 'time of', 'details of', 'info about', 'tell me more', 'its date', 'its location', 'its price', 'about', 'details'], weight: 4 }
+  };
+
+  // 1. Exact phrase weighting
+  for (const [intent, config] of Object.entries(weights)) {
+    for (const phrase of config.words) {
+      if (lowerQuery.includes(phrase)) scores[intent] += config.weight * 3;
+    }
+  }
+
+  // 2. Fuzzy token similarity
+  for (const token of allTokens) {
+    for (const [intent, config] of Object.entries(weights)) {
+      let bestTokenScore = 0;
+      for (const phrase of config.words) {
+        const pTokens = phrase.split(' ');
+        for (const pT of pTokens) {
+          if (getSimilarity(token, pT) > 0.85) {
+            const score = config.weight / pTokens.length;
+            if (score > bestTokenScore) bestTokenScore = score;
+          }
+        }
+      }
+      scores[intent] += bestTokenScore;
+    }
+  }
+
+  // 3. Pronoun detection (it/its/that) -> implies event_details context
+  if (lowerQuery.match(/\b(it|its|that|there|where)\b/i) && coreTokens.length <= 2) {
+    scores.event_details += 5;
+  }
+
+  // 4. Misfire Guard: If query is 100% stop words, it MUST be conversational
+  if (coreTokens.length === 0 && allTokens.length > 0) {
+    scores.conversational += 10;
+  }
+
+  // 5. Category Detection
+  let detectedCategory = null;
+  const categories = knowledgeBase.event_categories || [];
+  for (const token of coreTokens) {
+    const matchedCat = categories.find(cat => getSimilarity(token, cat) > 0.8 || cat.toLowerCase().includes(token.toLowerCase()));
+    if (matchedCat) {
+      detectedCategory = matchedCat;
+      scores.list_events += 5; // Implies listing events in this category
+      break;
+    }
+  }
+
+  let bestIntent = 'general';
+  let maxScore = 0;
+  for (const [intent, score] of Object.entries(scores)) {
+    if (score > maxScore) {
+      maxScore = score;
+      bestIntent = intent;
+    }
+  }
+
+  // Auto-search logic for single significant token (e.g., "DevFest")
+  if (maxScore < 2.0 && coreTokens.length === 1 && !detectedCategory && !lowerQuery.includes('login') && !lowerQuery.includes('sign')) {
+    bestIntent = 'event_details';
+  }
+
+  const result = {
+    type: bestIntent,
+    score: maxScore,
+    needsDB: ['count_events', 'list_events', 'my_tickets', 'recommendations', 'event_details'].includes(bestIntent),
+    category: detectedCategory,
+    scope: lowerQuery.match(/past|old|previous|gone|history/i) ? 'past' : 'future',
+    targetEvent: coreTokens.filter(t => !['buy', 'where', 'how to', 'date', 'time', 'location', 'price', 'tell', 'show', 'list', 'event', 'events'].includes(t.toLowerCase())).join(' ')
+  };
+
+  return result;
+}
+
+// 4. DATABASE SEARCH ENGINE
+async function executeQuery(intent, userId, context) {
+  const result = { data: null, count: 0, requiresLogin: false };
   try {
-    const { message, userId } = await req.json();
+    const filters = {};
+    if (intent.scope === 'past') filters.date = { $lt: new Date() };
+    else filters.date = { $gte: new Date() };
 
-    if (!message?.trim()) {
-      return NextResponse.json({ success: false, error: 'Message is required' }, { status: 400 });
+    switch (intent.type) {
+      case 'event_details':
+        const searchName = intent.targetEvent;
+        // Prio 1: Try exact regex match for name
+        if (searchName && searchName.length > 2) {
+          const keywords = searchName.split(/\s+/).filter(k => k.length >= 2);
+          const regexStr = keywords.map(k => `(?=.*${k})`).join('');
+          result.data = await Event.findOne({ event: { $regex: regexStr, $options: 'i' } }).lean();
+
+          if (!result.data && keywords.length > 1) {
+            // If and-logic fails, try to find any event that matches the most keywords
+            const allEvents = await Event.find({}).lean();
+            let best = null; let maxScore = 0;
+            for (const e of allEvents) {
+              let score = 0;
+              for (const k of keywords) {
+                if (e.event.toLowerCase().includes(k.toLowerCase())) score++;
+              }
+              if (score > maxScore) { maxScore = score; best = e; }
+            }
+            if (maxScore > 0) result.data = best;
+          }
+
+          if (!result.data) {
+            result.data = await Event.findOne({ event: { $regex: searchName, $options: 'i' } }).lean();
+          }
+          if (!result.data) {
+            // Fallback: Fuzzy search against ALL events
+            const allEvents = await Event.find({}).lean();
+            let best = null; let maxSim = 0;
+            for (const e of allEvents) {
+              const sim = getSimilarity(searchName, e.event);
+              if (sim > maxSim) { maxSim = sim; best = e; }
+            }
+            if (maxSim > 0.6) result.data = best;
+          }
+        }
+
+        // Prio 2: Context Memory if no specific name found OR if query is very short and matches context
+        if (!result.data && context?.eventName) {
+          result.data = await Event.findOne({ event: { $regex: context.eventName.split(' ')[0], $options: 'i' } }).lean();
+        }
+
+        if (result.data) result.count = 1;
+        break;
+
+      case 'my_tickets':
+        if (!userId) result.requiresLogin = true;
+        else {
+          result.data = await Ticket.find({ userId }).populate('eventId').sort({ purchaseDate: -1 }).limit(10).lean();
+          result.count = result.data.length;
+        }
+        break;
+
+      case 'count_events':
+        result.count = await Event.countDocuments(filters);
+        break;
+
+      case 'list_events':
+      case 'recommendations':
+        if (intent.category) filters.category = intent.category;
+        result.data = await Event.find(filters).sort({ date: 1 }).limit(3).lean();
+        result.count = result.data.length;
+        break;
+    }
+  } catch (e) {
+    console.error('DB Error:', e);
+  }
+  return result;
+}
+
+// 5. FUZZY FAQ SEARCH
+function findFuzzyMatch(query) {
+  const lowerQuery = query.toLowerCase();
+  const tokens = cleanTokens(lowerQuery.split(/\s+/));
+  if (tokens.length === 0) return null;
+
+  let bestMatch = null;
+  let highestScore = 0;
+
+  for (const faq of knowledgeBase.faq) {
+    const qTokens = cleanTokens(faq.question.toLowerCase().split(/\s+/));
+    let score = 0;
+    let matchCount = 0;
+    for (const qT of qTokens) {
+      let maxSim = 0;
+      for (const t of tokens) {
+        const sim = getSimilarity(qT, t);
+        if (sim > maxSim) maxSim = sim;
+      }
+      if (maxSim > 0.7) matchCount++;
+      score += maxSim;
     }
 
-    console.log('User message:', message);
-    console.log('User ID:', userId || 'NOT LOGGED IN');
+    // Coverage boost: If half of user's core keywords match FAQ keywords exactly/closely
+    const coverage = matchCount / (tokens.length || 1);
+    const finalScore = (score / (qTokens.length || 1)) + (coverage * 0.2);
+
+    if (finalScore > highestScore) {
+      highestScore = finalScore;
+      bestMatch = faq;
+    }
+  }
+  return highestScore > 0.65 ? bestMatch : null;
+}
+
+// 6. RESPONSE FORMATTER
+function generateResponse(query, intent, queryResult) {
+  const { type, scope } = intent;
+  const { data, count, requiresLogin } = queryResult;
+  const lowerQuery = query.toLowerCase();
+
+  // FAQ Matching (Priority for specific platform questions)
+  const faqMatch = findFuzzyMatch(query);
+
+  // If intent is high-confidence DB type (like my_tickets), override FAQ to prevent "how to buy" instructions
+  if (intent.score > 10 && (type === 'my_tickets' || type === 'event_details')) {
+    // skip FAQ
+  } else if (faqMatch && (intent.score < 15 || type === 'platform_info' || type === 'navigation' || type === 'troubleshooting')) {
+    return faqMatch.answer;
+  }
+
+  if (requiresLogin) return "You need to be logged in to access that. Please sign in at the login page.";
+
+  switch (type) {
+    case 'event_details':
+      if (data) {
+        return `Details for **${data.event}**:\\n📅 Date: ${new Date(data.date).toLocaleDateString()}\\n📍 Location: ${data.location}\\n💰 Price: $${data.price || 'Contact organizer'}\\n🎟️ Status: ${data.remainingTickets > 0 ? `${data.remainingTickets} tickets left` : 'Sold out'}`;
+      }
+      return "I couldn't find a specific event with that name. You can explore all upcoming events at the discover page!";
+
+    case 'conversational':
+      if (lowerQuery.match(/how are|uoy|uou|are oka|doing/i)) return "I'm doing great! Ready to help you with events and tickets. What's on your mind?";
+      if (lowerQuery.match(/hi|hello|hey|hillo/i)) return "Hi! I'm your BlockTix assistant. Ask me anything about our platform or events.";
+      return "I'm here to help! What would you like to know?";
+
+    case 'my_tickets':
+      if (count > 0) {
+        const list = data.slice(0, 3).map(t => `• ${t.eventId?.event || 'Event'}`).join('\\n');
+        return `You have **${count} tickets**. Your recent ones:\\n${list}\\n\\nView full details at your user dashboard`;
+      }
+      return "You don't have any tickets yet. Explore the discover page to find an event and purchase your first ticket!";
+
+    case 'count_events':
+      if (count === 0) return `I couldn't find any ${scope === 'past' ? 'past ' : ''}events.`;
+      return `We found **${count} ${scope === 'past' ? 'past ' : ''}events**. Find your next experience at the discover page!`;
+
+    case 'list_events':
+    case 'recommendations':
+      if (!data || data.length === 0) return `No ${intent.category ? intent.category + ' ' : ''}events found right now. Check the discover page for live updates.`;
+      const eventList = data.map(e => `• ${e.event} (${new Date(e.date).toLocaleDateString()})`).join('\\n');
+      return `Here's what I found${intent.category ? ' in ' + intent.category : ''}:\\n${eventList}\\n\\nSee more at the discover page`;
+
+    case 'platform_info':
+    case 'troubleshooting':
+    case 'navigation':
+      if (lowerQuery.match(/blockchain|security|safe/i)) return knowledgeBase.platform.features[0] + ". " + knowledgeBase.platform.features[1];
+      if (lowerQuery.match(/resale|resell/i)) {
+        const resaleFaq = knowledgeBase.faq.find(f => f.question.toLowerCase().includes('resell'));
+        return "Resale is handled via secure smart contracts to prevent fraud. " + (resaleFaq?.answer || "");
+      }
+      if (faqMatch) return faqMatch.answer;
+
+      // Dynamic fallbacks when no FAQ matches
+      if (type === 'troubleshooting') {
+        return "I'm sorry you're having trouble. Could you please specify your issue? For example, are you facing problems with **payments**, **tickets**, or **logging in**?";
+      }
+      if (type === 'navigation') {
+        if (lowerQuery.includes('login') || lowerQuery.includes('sign in')) return "You can sign in to your account at the login page.";
+        if (lowerQuery.includes('signup') || lowerQuery.includes('register')) return "Create a new account at the sign up page.";
+        return "Where would you like to go? I can help you find the **discover page**, your **user dashboard**, or the **authentication** section.";
+      }
+
+      return "I can help you with event discovery, ticket management, and more on BlockTix. What specifically would you like to know about our platform?";
+  }
+
+  return "I'm not sure I understand. Try asking about 'upcoming events', 'my tickets', or 'how does resale work?'.";
+}
+
+// --- MAIN API ENDPOINT ---
+export async function POST(req) {
+  try {
+    const { message, userId, conversationHistory } = await req.json();
+    if (!message?.trim()) return NextResponse.json({ success: false, message: 'Message required' }, { status: 400 });
 
     await dbConnect();
+    const intent = detectIntent(message);
+    const context = extractContext(conversationHistory);
 
-    // STEP 1: Retrieve relevant data from MongoDB
-    const contextData = await retrieveRelevantData(message, userId);
+    let queryResult = { data: null, count: 0, requiresLogin: false };
+    if (intent.needsDB) queryResult = await executeQuery(intent, userId, context);
 
-    console.log('Retrieved:', {
-      events: contextData.events.length,
-      tickets: contextData.userTickets.length,
-      intent: JSON.stringify(contextData.intent)
-    });
-
-    // STEP 2: Build context string
-    const contextString = buildContextString(contextData, message, userId);
-
-    // STEP 3: Generate response via Ollama
-    const response = await generateRAGResponse(message, contextString, contextData.intent, userId);
-
-    console.log('Final response:', response);
+    const response = generateResponse(message, intent, queryResult);
 
     return NextResponse.json({
       success: true,
       message: response,
       metadata: {
-        eventsFound: contextData.events.length,
-        userTicketsCount: contextData.userTickets.length,
-        model: LLM_MODEL
+        intent: intent.type,
+        score: intent.score.toFixed(2),
+        eventsFound: queryResult.count,
+        userTicketsCount: intent.type === 'my_tickets' ? queryResult.count : 0
       }
     });
 
-  } catch (error) {
-    console.error('Chatbot error:', error);
-    return NextResponse.json({
-      success: false,
-      message: "I'm having trouble right now. Please try again in a moment."
-    }, { status: 500 });
-  }
-}
-
-
-// INTENT DETECTION
-
-function detectIntent(query) {
-  const intent = {
-    needsEvents: false,
-    isRecommendation: false,
-    isTicketQuery: false,
-    isTroubleshooting: false,
-    isConversational: false,
-    isNavigation: false,
-    category: null,
-    location: null,
-    priceMax: null,
-    dateRange: null
-  };
-
-  // Short/conversational messages (≤2 words or punctuation only)
-  const wordCount = query.trim().split(/\s+/).length;
-  if (
-    wordCount <= 2 ||
-    query.match(/^[?!.]+$/) ||
-    query.match(/^(ok|okay|thanks|thank you|hi|hello|hey|cool|great|sure|yes|no|nope|yep|alright|got it)$/i)
-  ) {
-    intent.isConversational = true;
-    return intent;
-  }
-
-  // Navigation questions
-  if (query.match(/how (do i|to) (go|navigate|get|access|find|open|view) (to |the )?(event|ticket|page|section|dashboard|wallet|profile)/i)) {
-    intent.isNavigation = true;
-    return intent;
-  }
-  if (query.match(/where (is|can i find|do i go) (the )?(event|ticket|page|section|dashboard)/i)) {
-    intent.isNavigation = true;
-    return intent;
-  }
-  if (query.match(/events? page|ticket page|discover page|how (to|do i) (browse|find) events?/i)) {
-    intent.isNavigation = true;
-    return intent;
-  }
-
-  // Recommendation
-  if (query.match(/recommend|suggest|for me|best events|what should i (attend|see|go)/i)) {
-    intent.isRecommendation = true;
-    intent.needsEvents = true;
-    return intent;
-  }
-
-  // Ticket queries — ONLY for user's OWN tickets (uses possessive "my")
-  if (query.match(/\bmy tickets?\b|\bmy events?\b|\bi (purchased|bought)\b|\bshow my\b|\bview my\b|\bmy orders?\b/i)) {
-    intent.isTicketQuery = true;
-    return intent;
-  }
-
-  // Troubleshooting
-  if (query.match(/problem|issue|error|not working|failed|can't|cannot|how do i|how to|payment failed|qr code|forgot password|waitlist|refund/i)) {
-    intent.isTroubleshooting = true;
-    return intent;
-  }
-
-  // Category detection
-  const categories = {
-    'music|concert|band|performance': 'Music',
-    'sports|cricket|football|basketball|match|game|tournament': 'Sports',
-    'art|gallery|exhibition|museum|painting': 'Art',
-    'workshop|seminar|conference|lecture|training': 'Education',
-    'food|drink|restaurant|culinary|dining': 'Food And Drink',
-    'festival|carnival|celebration|fair': 'Festival'
-  };
-
-  for (const [pattern, category] of Object.entries(categories)) {
-    if (query.match(new RegExp(pattern, 'i'))) {
-      intent.category = category;
-      intent.needsEvents = true;
-    }
-  }
-
-  // Location detection
-  const locationMatch = query.match(/\bin\s+([a-z][a-z\s]{2,25}?)(?:\s+under|\s+below|\s+on|\s*$)|\bat\s+([a-z][a-z\s]{2,25}?)(?:\s+under|\s*$)/i);
-  if (locationMatch) {
-    const loc = (locationMatch[1] || locationMatch[2])?.trim();
-    if (loc && loc.length > 2) {
-      intent.location = loc;
-      intent.needsEvents = true;
-    }
-  }
-
-  // Price detection
-  const priceMatch = query.match(/under\s+\$?(\d+)|below\s+\$?(\d+)|cheaper\s+than\s+\$?(\d+)|less than\s+\$?(\d+)/i);
-  if (priceMatch) {
-    intent.priceMax = parseInt(priceMatch[1] || priceMatch[2] || priceMatch[3] || priceMatch[4]);
-    intent.needsEvents = true;
-  }
-
-  // Date range detection
-  if (query.match(/\b(today|tomorrow|this weekend|weekend|this week|this month)\b/i)) {
-    intent.dateRange = parseDateRange(query);
-    intent.needsEvents = true;
-  }
-
-  // General event browsing (without "my" — so not personal tickets)
-  if (query.match(/\b(events?|show|concert|happening|available|upcoming|browse)\b/i) && !intent.isTicketQuery) {
-    intent.needsEvents = true;
-  }
-
-  return intent;
-}
-
-
-// DATE RANGE PARSER
-
-function parseDateRange(query) {
-  const now = new Date();
-
-  if (query.includes('today')) {
-    return {
-      start: new Date(new Date().setHours(0, 0, 0, 0)),
-      end: new Date(new Date().setHours(23, 59, 59, 999))
-    };
-  }
-  if (query.includes('tomorrow')) {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return {
-      start: new Date(new Date(d).setHours(0, 0, 0, 0)),
-      end: new Date(new Date(d).setHours(23, 59, 59, 999))
-    };
-  }
-  if (query.includes('weekend')) {
-    const day = now.getDay();
-    const daysToFriday = (5 - day + 7) % 7 || 7;
-    const friday = new Date();
-    friday.setDate(now.getDate() + daysToFriday);
-    friday.setHours(0, 0, 0, 0);
-    const sunday = new Date(friday);
-    sunday.setDate(friday.getDate() + 2);
-    sunday.setHours(23, 59, 59, 999);
-    return { start: friday, end: sunday };
-  }
-  if (query.includes('this week')) {
-    const end = new Date();
-    end.setDate(now.getDate() + 7);
-    return { start: now, end };
-  }
-  if (query.includes('this month')) {
-    const end = new Date();
-    end.setMonth(now.getMonth() + 1);
-    return { start: now, end };
-  }
-  return null;
-}
-
-
-// DATABASE FUNCTIONS
-
-async function retrieveRelevantData(query, userId) {
-  const lowerQuery = query.toLowerCase();
-  const intent = detectIntent(lowerQuery);
-
-  let events = [];
-  let userTickets = [];
-  let user = null;
-
-  try {
-    // Only fetch user data when specifically needed
-    if (userId && (intent.isTicketQuery || intent.isRecommendation)) {
-      user = await User.findOne({ firebase_uid: userId });
-      userTickets = await getUserTickets(userId);
-    }
-
-    // Only fetch events when needed
-    if (intent.needsEvents) {
-      if (intent.isRecommendation && userId) {
-        events = await recommendEvents(userId);
-      } else {
-        events = await searchEvents({
-          category: intent.category,
-          location: intent.location,
-          priceMax: intent.priceMax,
-          dateRange: intent.dateRange
-        });
-      }
-    }
-  } catch (error) {
-    console.error('Error retrieving data:', error);
-  }
-
-  return { events, userTickets, user, intent };
-}
-
-async function searchEvents({ category, location, priceMax, dateRange }) {
-  try {
-    const filters = {};
-    if (category) filters.category = category;
-    if (location) filters.location = { $regex: location, $options: 'i' };
-    if (priceMax) filters.price = { $lte: priceMax };
-    filters.date = dateRange
-      ? { $gte: dateRange.start, $lte: dateRange.end }
-      : { $gte: new Date() };
-    filters.remainingTickets = { $gt: 0 };
-
-    return await Event.find(filters).sort({ date: 1 }).limit(5).lean();
   } catch (err) {
-    console.error('searchEvents error:', err);
-    return [];
-  }
-}
-
-async function getUserTickets(userId) {
-  try {
-    return await Ticket.find({ userId })
-      .populate('eventId')
-      .sort({ purchaseDate: -1 })
-      .limit(10)
-      .lean();
-  } catch (err) {
-    console.error('getUserTickets error:', err);
-    return [];
-  }
-}
-
-async function recommendEvents(userId) {
-  try {
-    const userTickets = await Ticket.find({ userId }).populate('eventId').lean();
-    const preferredCategories = [...new Set(
-      userTickets.map(t => t.eventId?.category).filter(Boolean)
-    )];
-
-    if (preferredCategories.length) {
-      return await Event.find({
-        category: { $in: preferredCategories },
-        date: { $gte: new Date() },
-        remainingTickets: { $gt: 0 }
-      }).sort({ date: 1 }).limit(5).lean();
-    }
-
-    // Fallback: return upcoming events
-    return await Event.find({
-      date: { $gte: new Date() },
-      remainingTickets: { $gt: 0 }
-    }).sort({ date: 1 }).limit(5).lean();
-  } catch (err) {
-    console.error('recommendEvents error:', err);
-    return [];
-  }
-}
-
-
-// CONTEXT BUILDING
-
-function buildContextString({ events, userTickets, user, intent }, userQuery, userId) {
-  let context = `USER QUERY: "${userQuery}"\n\n`;
-
-  // TICKET CONTEXT (only when user asks for THEIR tickets)
-  if (intent.isTicketQuery) {
-    if (!userId) {
-      context += `TICKET STATUS: NOT LOGGED IN\n`;
-      context += `User must log in to view their tickets.\n\n`;
-    } else if (userTickets.length === 0) {
-      context += `TICKET STATUS: NO TICKETS FOUND\n`;
-      context += `This user has not purchased any tickets yet.\n\n`;
-    } else {
-      context += `USER'S TICKETS (${userTickets.length} total):\n`;
-      userTickets.slice(0, 5).forEach((t, i) => {
-        const e = t.eventId;
-        if (e) {
-          context += `\nTicket ${i + 1}:\n`;
-          context += `  Event: ${e.event}\n`;
-          context += `  Date: ${new Date(e.date).toLocaleDateString('en-US', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-          })}\n`;
-          context += `  Time: ${e.time}\n`;
-          context += `  Location: ${e.location}\n`;
-          context += `  Status: ${t.status}\n`;
-        }
-      });
-      context += '\n';
-    }
-  }
-
-  // EVENT CONTEXT
-  if (intent.needsEvents) {
-    if (events.length === 0) {
-      context += `EVENT STATUS: NO EVENTS FOUND\n`;
-      if (intent.category) context += `Searched category: ${intent.category}\n`;
-      if (intent.location) context += `Searched location: ${intent.location}\n`;
-      if (intent.priceMax) context += `Max price searched: $${intent.priceMax}\n`;
-      context += '\n';
-    } else {
-      context += `AVAILABLE EVENTS (${events.length} found):\n`;
-      events.slice(0, 5).forEach((e, i) => {
-        context += `\nEvent ${i + 1}:\n`;
-        context += `  Name: ${e.event}\n`;
-        context += `  Category: ${e.category}\n`;
-        context += `  Date: ${new Date(e.date).toLocaleDateString('en-US', {
-          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        })}\n`;
-        context += `  Time: ${e.time}\n`;
-        context += `  Location: ${e.location}\n`;
-        context += `  Price: $${e.price}\n`;
-        context += `  Tickets Available: ${e.remainingTickets}\n`;
-        if (e.earlyBird?.enabled && new Date() < new Date(e.earlyBird.endDate)) {
-          context += `  Early Bird Price: $${e.earlyBird.discountPrice}\n`;
-        }
-      });
-      context += '\n';
-    }
-  }
-
-  // TROUBLESHOOTING CONTEXT
-  if (intent.isTroubleshooting) {
-    context += buildTroubleshootingContext(userQuery);
-  }
-
-  // NAVIGATION CONTEXT
-  if (intent.isNavigation) {
-    context += `PLATFORM NAVIGATION:\n`;
-    context += `- Browse Events (no login needed): /discover\n`;
-    context += `- My Tickets (login required): /dashboard/user\n`;
-    context += `- Login: /login\n`;
-    context += `- Profile: /profile\n`;
-    context += `- Help: /help\n\n`;
-  }
-
-  // CONVERSATIONAL
-  if (intent.isConversational) {
-    context += `NOTE: User sent a short/casual message. Respond naturally and offer to help.\n\n`;
-  }
-
-  context += `==== END OF CONTEXT DATA ====\n`;
-  return context;
-}
-
-function buildTroubleshootingContext(query) {
-  let ctx = 'TROUBLESHOOTING INFO:\n';
-
-  if (query.match(/payment|pay|transaction/i)) {
-    ctx += `\nPayment issue steps:\n1. Verify card details\n2. Check sufficient funds\n3. Try different payment method\n4. Clear browser cache\n5. Contact support with order ID\n`;
-  }
-  if (query.match(/qr code|qr not/i)) {
-    ctx += `\nQR Code issue steps:\n1. Check email (including spam)\n2. Log in → My Tickets\n3. Re-download ticket\n4. Ensure good lighting when scanning\n5. Hold phone steady at entry point\n`;
-  }
-  if (query.match(/ticket not|missing ticket|didn't receive|no ticket/i)) {
-    ctx += `\nMissing ticket steps:\n1. Check email and spam folder\n2. Log in → My Tickets\n3. Verify purchase was successful\n4. Contact support if still missing\n`;
-  }
-  if (query.match(/login|password|access|locked/i)) {
-    ctx += `\nLogin issue steps:\n1. Click "Forgot Password"\n2. Check email verification\n3. Clear cookies and cache\n4. Try different browser\n5. Contact support for account recovery\n`;
-  }
-  if (query.match(/waitlist/i)) {
-    ctx += `\nWaitlist info:\n- Join waitlist from the event page\n- You'll be emailed if tickets open up\n- First-come-first-served basis\n`;
-  }
-  if (query.match(/how (do i|to) buy|how (do i|to) purchase|how (do i|to) get ticket/i)) {
-    ctx += `\nHow to buy tickets:\n1. Browse events on /discover\n2. Click on the event you want\n3. Select ticket quantity\n4. Complete payment\n5. Ticket sent to your email\n`;
-  }
-
-  return ctx + '\n';
-}
-
-
-// RAG RESPONSE GENERATION
-
-async function generateRAGResponse(userMessage, context, intent, userId) {
-  try {
-    const fullPrompt = `${SYSTEM_PROMPT}
-
-===== CONTEXT DATA START =====
-${context}
-===== CONTEXT DATA END =====
-
-User Question: "${userMessage}"
-
-Your answer (2-4 sentences, use ONLY the context data, be helpful):`;
-
-    console.log('Calling Ollama...');
-
-    const response = await ollama.generate({
-      model: LLM_MODEL,
-      prompt: fullPrompt,
-      stream: false,
-      options: {
-        temperature: LLM_TEMPERATURE,
-        num_predict: 150,
-        num_ctx: 4096,
-        top_p: 0.9,
-        top_k: 20,
-        repeat_penalty: 1.1
-      }
-    });
-
-    let answer = response.response.trim();
-    console.log('Raw LLM answer:', answer);
-
-  
-    // PRECISE ANTI-HALLUCINATION CHECKS
-
-    // CHECK 1: LLM is listing fake structured ticket data
-    // Triggers on patterns like "• Event: X", "Ticket 1:", "Rs 2,500", "The Arena"
-    const fakingTicketList =
-      answer.match(/here are your tickets:/i) ||
-      answer.match(/ticket\s+\d+\s*:/i) ||
-      answer.match(/•\s+event:/i) ||
-      answer.match(/rs\s+\d{3,}/i);   // Invented price in local currency
-
-    if (fakingTicketList && (context.includes('TICKET STATUS: NO TICKETS FOUND') || context.includes('TICKET STATUS: NOT LOGGED IN'))) {
-      console.warn('Hallucinated ticket list detected — overriding');
-      return !userId
-        ? "Please log in to view your tickets."
-        : "You don't have any tickets yet. Browse events at /discover and purchase tickets to see them here!";
-    }
-
-    // CHECK 2: LLM lists fake events when search returned nothing
-    const fakingEventList =
-      answer.match(/event\s+\d+\s*:/i) ||
-      answer.match(/name:\s+\w+.*date:/i);
-
-    if (fakingEventList && context.includes('EVENT STATUS: NO EVENTS FOUND')) {
-      console.warn('Hallucinated event list detected — overriding');
-      return "I couldn't find any events matching your search. Try different criteria or visit /discover to browse all events.";
-    }
-
-    return answer;
-
-  } catch (error) {
-    console.error('Ollama error:', error);
-    return "I'm having trouble processing your request right now. Please try again in a moment.";
+    console.error('API Error:', err);
+    return NextResponse.json({ success: false, message: "Service unavailable." }, { status: 500 });
   }
 }
