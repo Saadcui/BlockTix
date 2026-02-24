@@ -38,6 +38,7 @@ function Navbar() {
           <div className="hidden md:flex gap-2">
             <Link href="/" className="link">Home</Link>
             <Link href="/discover" className="link">Discover</Link>
+            <Link href="/marketplace" className="link">Marketplace</Link>
             {isAuthed && user.role !== 'user' && (
               <Link href="/dashboard/organizer" className="link">Dashboard</Link>
             )}          
@@ -87,6 +88,7 @@ function Navbar() {
             {/* Mobile Links - styles match desktop font weight/color via 'link' class */}
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2 text-center font-medium">Home</Link>
             <Link href="/discover" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2 text-center font-medium">Discover</Link>
+            <Link href="/marketplace" onClick={() => setIsMobileMenuOpen(false)} className="link block py-2 text-center font-medium">Marketplace</Link>
             
             {isAuthed && user.role !== 'user' && (
               <Link

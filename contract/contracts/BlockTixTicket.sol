@@ -40,18 +40,23 @@ contract BlockTixTicket is ERC721, ERC721URIStorage, ERC2981, Ownable {
     /**
      * @dev Minting handles both Custodial and Direct-to-Wallet.
      * Items are Unlocked by default while in custody.
+     * @param royaltyReceiver The address that receives royalties on resale (organizer wallet).
+     *        If address(0), defaults to the platform owner.
      */
     function mintTicket(
         address to,
         string memory uri,
-        uint96 royaltyFeeNumerator
+        uint96 royaltyFeeNumerator,
+        address royaltyReceiver
     ) external onlyOwner returns (uint256) {
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         
         if (royaltyFeeNumerator > 0) {
-            _setTokenRoyalty(tokenId, owner(), royaltyFeeNumerator);
+            // Royalty goes to the organizer; falls back to platform if no organizer wallet
+            address receiver = royaltyReceiver != address(0) ? royaltyReceiver : owner();
+            _setTokenRoyalty(tokenId, receiver, royaltyFeeNumerator);
         }
 
         emit TicketMinted(tokenId, to, uri);

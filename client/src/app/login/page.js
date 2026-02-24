@@ -15,76 +15,142 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
+  
+  // New UI states
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const validateEmail = (val) => (!val.trim() ? '' : isValidEmail(val) ? '' : 'Please enter a valid email');
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError('');
-  const eErr = validateEmail(email);
-  if (eErr) {
-    setEmailError(eErr);
-    return;
-  }
-  setEmailError('');
+    e.preventDefault();
+    setError('');
+    const eErr = validateEmail(email);
+    if (eErr) {
+      setEmailError(eErr);
+      return;
+    }
+    setEmailError('');
+    setIsLoading(true);
 
-  try {
-  const { role } = await login(email, password);
-  router.push(`/dashboard/${role}`);
-} catch (err) {
-  console.error("Login error:", err.code, err.message);
+    try {
+      const { role } = await login(email, password);
+      setIsSuccess(true);
+      
+      // Short delay so the user actually sees the success state before redirecting
+      setTimeout(() => {
+        router.push(`/dashboard/${role}`);
+      }, 1500);
+      
+    } catch (err) {
+      setIsLoading(false);
+      console.error("Login error:", err.code, err.message);
 
-  if (err.message === "EMAIL_NOT_VERIFIED") {
-    setError("Please verify your email first. Check your inbox (and spam).");
-  } else if (
-    err.code === "auth/invalid-credential" ||
-    err.code === "auth/invalid-login-credentials"
-  ) {
-    setError("Email or password is incorrect.");
-  } else {
-    setError("Unexpected error. Please try again.");
-  }
-}
-};
-
-
+      if (err.message === "EMAIL_NOT_VERIFIED") {
+        setError("Please verify your email first. Check your inbox (and spam).");
+      } else if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/invalid-login-credentials"
+      ) {
+        setError("Email or password is incorrect.");
+      } else {
+        setError("Unexpected error. Please try again.");
+      }
+    }
+  };
 
   return (
-    <form onSubmit={handleLogin} className='flex flex-col items-center justify-center min-h-screen'>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className='flex items-center justify-center min-h-[calc(100vh-100px)] w-full px-4'>
+      <div className='w-full max-w-[400px] bg-white/30 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/40 flex flex-col items-center'>
+        
+        <h2 className='text-3xl font-bold mb-6 text-gray-800'>Login</h2>
 
-      <div className='w-[400px] h-[auto] bg-white/20 backdrop-blur-md p-10 rounded-lg'>
-        <h2 className='font-bold mb-4'>Login</h2>
+        {/* Error Message */}
+        {error && (
+          <div className="w-full mb-4 p-3 rounded-lg bg-red-100/80 border border-red-200 text-red-600 text-sm text-center animate-in fade-in zoom-in duration-300">
+            {error}
+          </div>
+        )}
 
-        <label className='label'>Email</label>
-        <input
-          className={`input ${emailError ? 'border-red-500' : ''}`}
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          onBlur={() => setEmailError(validateEmail(email))}
-          onFocus={() => setEmailError('')}
-          required
-        />
-        {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+        {/* Success Message */}
+        {isSuccess && (
+          <div className="w-full mb-4 p-3 rounded-lg bg-green-100/80 border border-green-200 text-green-700 text-sm text-center animate-in fade-in zoom-in duration-300">
+            Login successful! Redirecting...
+          </div>
+        )}
 
-        <label className='label'>Password</label>
-        <input
-          className='input'
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
+        <form onSubmit={handleLogin} className="w-full flex flex-col space-y-4">
+          
+          {/* Email Container */}
+          <div className="w-full flex flex-col gap-1">
+            <label className='text-sm font-semibold text-gray-700 ml-1'>Email</label>
+            <input
+              className={`w-90 p-3 rounded-xl bg-white/60 border outline-none transition-all focus:ring-2 focus:ring-purple-500/50 ${
+                emailError ? 'border-red-500' : 'border-gray-200'
+              } ${isLoading || isSuccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onBlur={() => setEmailError(validateEmail(email))}
+              onFocus={() => setEmailError('')}
+              disabled={isLoading || isSuccess}
+              required
+            />
+            {emailError && <p className="text-red-500 text-xs mt-1 ml-1">{emailError}</p>}
+          </div>
 
-        <label className='text-sm'>Dont have an account? <Link href="/signup">Sign up</Link></label>
-        <br />
-        <label className='text-sm color-[#7C3AED]'><Link href="/resetPassword">Forgot Password?</Link></label>
+          {/* Password Container */}
+          <div className="w-full flex flex-col gap-1">
+            <label className='text-sm font-semibold text-gray-700 ml-1'>Password</label>
+            <input
+              className={`w-90 p-3 rounded-xl bg-white/60 border border-gray-200 outline-none transition-all focus:ring-2 focus:ring-purple-500/50 ${
+                isLoading || isSuccess ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              disabled={isLoading || isSuccess}
+              required
+            />
+          </div>
 
-        <button type="submit" className='btn w-[417px]'>Log In</button>
+          {/* Helper Links */}
+          <div className="flex flex-col space-y-1 py-1">
+            <p className='text-xs text-gray-600'>
+              Dont have an account?{' '}
+              <Link href="/signup" className={`text-purple-700 font-bold hover:underline ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>Sign up</Link>
+            </p>
+            <Link href="/resetPassword" title="Forgot Password?" className={`text-xs font-bold text-purple-700 hover:underline w-fit ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>
+              Forgot Password?
+            </Link>
+          </div>
+
+          {/* Submit Button */}
+          <button 
+            type="submit" 
+            disabled={isLoading || isSuccess}
+            className={`w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-purple-900/20 transition-all active:scale-95 flex justify-center items-center ${
+              (isLoading || isSuccess) ? 'opacity-80 cursor-not-allowed' : ''
+            }`}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Logging In...</span>
+              </div>
+            ) : isSuccess ? (
+              <span>Success!</span>
+            ) : (
+              "Log In"
+            )}
+          </button>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }

@@ -169,7 +169,7 @@ function detectIntent(query) {
 async function executeQuery(intent, userId, context) {
   const result = { data: null, count: 0, requiresLogin: false };
   try {
-    const filters = {};
+    const filters = { deleted: { $ne: true } }; // Exclude soft-deleted events
     if (intent.scope === 'past') filters.date = { $lt: new Date() };
     else filters.date = { $gte: new Date() };
 
@@ -180,11 +180,14 @@ async function executeQuery(intent, userId, context) {
         if (searchName && searchName.length > 2) {
           const keywords = searchName.split(/\s+/).filter(k => k.length >= 2);
           const regexStr = keywords.map(k => `(?=.*${k})`).join('');
-          result.data = await Event.findOne({ event: { $regex: regexStr, $options: 'i' } }).lean();
+          result.data = await Event.findOne({ 
+            event: { $regex: regexStr, $options: 'i' },
+            deleted: { $ne: true }
+          }).lean();
 
           if (!result.data && keywords.length > 1) {
             // If and-logic fails, try to find any event that matches the most keywords
-            const allEvents = await Event.find({}).lean();
+            const allEvents = await Event.find({ deleted: { $ne: true } }).lean();
             let best = null; let maxScore = 0;
             for (const e of allEvents) {
               let score = 0;
@@ -197,11 +200,14 @@ async function executeQuery(intent, userId, context) {
           }
 
           if (!result.data) {
-            result.data = await Event.findOne({ event: { $regex: searchName, $options: 'i' } }).lean();
+            result.data = await Event.findOne({ 
+              event: { $regex: searchName, $options: 'i' },
+              deleted: { $ne: true }
+            }).lean();
           }
           if (!result.data) {
-            // Fallback: Fuzzy search against ALL events
-            const allEvents = await Event.find({}).lean();
+            // Fallback: Fuzzy search against ALL events (excluding deleted)
+            const allEvents = await Event.find({ deleted: { $ne: true } }).lean();
             let best = null; let maxSim = 0;
             for (const e of allEvents) {
               const sim = getSimilarity(searchName, e.event);
@@ -213,7 +219,10 @@ async function executeQuery(intent, userId, context) {
 
         // Prio 2: Context Memory if no specific name found OR if query is very short and matches context
         if (!result.data && context?.eventName) {
-          result.data = await Event.findOne({ event: { $regex: context.eventName.split(' ')[0], $options: 'i' } }).lean();
+          result.data = await Event.findOne({ 
+            event: { $regex: context.eventName.split(' ')[0], $options: 'i' },
+            deleted: { $ne: true }
+          }).lean();
         }
 
         if (result.data) result.count = 1;
@@ -222,7 +231,16 @@ async function executeQuery(intent, userId, context) {
       case 'my_tickets':
         if (!userId) result.requiresLogin = true;
         else {
-          result.data = await Ticket.find({ userId }).populate('eventId').sort({ purchaseDate: -1 }).limit(10).lean();
+          result.data = await Ticket.find({ userId })
+            .populate({
+              path: 'eventId',
+              match: { deleted: { $ne: true } }
+            })
+            .sort({ purchaseDate: -1 })
+            .limit(10)
+            .lean();
+          // Filter out tickets with deleted events
+          result.data = result.data.filter(ticket => ticket.eventId !== null);
           result.count = result.data.length;
         }
         break;

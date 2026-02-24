@@ -21,6 +21,9 @@ export async function GET(req, context) {
       name: user.name,
       email: user.email,
       role: user.role,
+      walletAddress: user.walletAddress || null,
+      royaltyBalance: user.royaltyBalance || 0,
+      defaultRoyaltyBps: typeof user.defaultRoyaltyBps === 'number' ? user.defaultRoyaltyBps : 500,
       createdAt: user.createdAt
     });
   } catch (error) {
@@ -35,6 +38,32 @@ export async function PUT(req, { params }) {
     await dbConnect();
     const body = await req.json();
     const { firebase_uid: identifier } = await params;
+
+    // Basic validation for wallet address updates
+    if (Object.prototype.hasOwnProperty.call(body, 'walletAddress')) {
+      const walletAddress = body.walletAddress;
+      if (walletAddress === '' || walletAddress === undefined) {
+        body.walletAddress = null;
+      }
+
+      if (body.walletAddress !== null) {
+        const isValid = typeof body.walletAddress === 'string' && /^0x[a-fA-F0-9]{40}$/.test(body.walletAddress.trim());
+        if (!isValid) {
+          return NextResponse.json({ success: false, error: 'Invalid wallet address format' }, { status: 400 });
+        }
+        body.walletAddress = body.walletAddress.trim();
+      }
+    }
+
+    // Validate defaultRoyaltyBps (basis points). Cap at 10% (1000 bps).
+    if (Object.prototype.hasOwnProperty.call(body, 'defaultRoyaltyBps')) {
+      const parsed = Number(body.defaultRoyaltyBps);
+      if (!Number.isFinite(parsed)) {
+        return NextResponse.json({ success: false, error: 'Invalid defaultRoyaltyBps' }, { status: 400 });
+      }
+      const clamped = Math.max(0, Math.min(1000, Math.floor(parsed)));
+      body.defaultRoyaltyBps = clamped;
+    }
 
     let updatedUser = null;
     if (mongoose.Types.ObjectId.isValid(identifier)) {

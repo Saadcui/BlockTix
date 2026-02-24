@@ -7,7 +7,8 @@ export async function GET() {
   try {
     await dbConnect();
 
-    const events = await Event.find({}).lean(); 
+    // Exclude soft-deleted events
+    const events = await Event.find({ deleted: { $ne: true } }).lean(); 
 
     return NextResponse.json({ success: true, events });
   } catch (error) {

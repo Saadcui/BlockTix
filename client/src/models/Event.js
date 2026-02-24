@@ -71,7 +71,18 @@ const eventSchema = new mongoose.Schema({
     longitude: {
       type: Number,
     },
+    deleted: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    deletedAt: {
+      type: Date,
+      default: null
+    }
 }, { timestamps: true });
 
+// Note: Hard deletion prevention is handled in the DELETE API route
+// This ensures tickets are preserved even if event is soft-deleted
 
 export default mongoose.models.Event || mongoose.model("Event", eventSchema);

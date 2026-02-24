@@ -28,7 +28,9 @@ export async function POST(req, { params }) {
 
         // Call blockchain to transfer NFT
         try {
-            await claimNFT(ticket.tokenId, userWallet);
+            const receipt = await claimNFT(ticket.tokenId, userWallet);
+            ticket.claimTxHash = receipt?.hash || receipt?.transactionHash || null;
+            ticket.lastOnChainTxHash = ticket.claimTxHash;
         } catch (bcError) {
             console.error("Blockchain transfer failed:", bcError);
             return NextResponse.json({ error: "Blockchain transfer failed: " + bcError.message }, { status: 500 });
