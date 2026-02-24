@@ -14,7 +14,7 @@ function MarketplacePage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [buyingTicketId, setBuyingTicketId] = useState(null);
-  
+
   const { user } = useAuth();
   const router = useRouter();
 
@@ -118,16 +118,16 @@ function MarketplacePage() {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen px-6 py-8 bg-gradient-to-br from-blue-50 to-indigo-100">
+      <main className="min-h-screen px-6 py-8">
         {/* Header */}
         <div className="max-w-7xl mx-auto mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
@@ -147,27 +147,23 @@ function MarketplacePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
             {/* Search */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Search
-              </label>
+              <label className="label font-semibold">Search by Event</label>
               <input
                 type="text"
-                placeholder="Search events or location..."
+                placeholder="e.g., Music Concert"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="input"
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Category
-              </label>
+              <label className="label font-semibold">Category</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="input"
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -177,27 +173,48 @@ function MarketplacePage() {
               </select>
             </div>
           </div>
+
+          {/* Clear Filters */}
+          <div className="mt-6">
+            <button
+              onClick={() => {
+                setSearch('');
+                setCategory('All');
+              }}
+              className="btn font-bold"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
 
         {/* Tickets Grid */}
-        {loading ? (
-          <div className="max-w-7xl mx-auto">
-            <div className="animate-pulse space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-lg shadow-md p-6 h-64" />
+        <div className="max-w-7xl mx-auto bg-white/20 backdrop-blur-md p-10 rounded-lg">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white/10 backdrop-blur-md rounded-lg shadow animate-pulse h-64 overflow-hidden"
+                >
+                  <div className="h-40 bg-gray-200/40" />
+                  <div className="p-4">
+                    <div className="h-5 bg-gray-200/40 rounded mb-3 w-3/4" />
+                    <div className="h-4 bg-gray-200/40 rounded mb-2 w-1/2" />
+                    <div className="h-4 bg-gray-200/40 rounded w-1/3" />
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        ) : filteredTickets.length === 0 ? (
-          <div className="max-w-7xl mx-auto text-center py-12">
-            <p className="text-xl text-gray-600">
-              {resaleTickets.length === 0 
-                ? 'No tickets available for resale at the moment.' 
-                : 'No tickets match your filters.'}
-            </p>
-          </div>
-        ) : (
-          <div className="max-w-7xl mx-auto">
+          ) : filteredTickets.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-xl text-gray-600">
+                {resaleTickets.length === 0
+                  ? 'No tickets available for resale at the moment.'
+                  : 'No tickets match your filters.'}
+              </p>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTickets.map((ticket) => {
                 const event = ticket.eventId;
@@ -272,17 +289,17 @@ function MarketplacePage() {
                         )}
                         <div className="mt-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100">
                           <p className="text-xs text-amber-700">
-                              {(() => {
-                                const bps = typeof ticket.royaltyBps === 'number' ? ticket.royaltyBps : 0;
-                                const pct = Math.max(0, Math.min(1000, bps)) / 100;
-                                const receiver = ticket.royaltyReceiverWallet;
+                            {(() => {
+                              const bps = typeof ticket.royaltyBps === 'number' ? ticket.royaltyBps : 0;
+                              const pct = Math.max(0, Math.min(1000, bps)) / 100;
+                              const receiver = ticket.royaltyReceiverWallet;
 
-                                const receiverLabel = receiver
-                                  ? ` (receiver: ${receiver.slice(0, 6)}...${receiver.slice(-4)})`
-                                  : '';
+                              const receiverLabel = receiver
+                                ? ` (receiver: ${receiver.slice(0, 6)}...${receiver.slice(-4)})`
+                                : '';
 
-                                return `${pct}% royalty goes to the original event organizer on every resale${receiverLabel}`;
-                              })()}
+                              return `${pct}% royalty goes to the original event organizer on every resale${receiverLabel}`;
+                            })()}
                           </p>
                         </div>
                       </div>
@@ -291,13 +308,12 @@ function MarketplacePage() {
                       <button
                         onClick={() => handleBuyTicket(ticket)}
                         disabled={isBuying || isOwned}
-                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2 ${
-                          isOwned
-                            ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                            : isBuying
+                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2 ${isOwned
+                          ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                          : isBuying
                             ? 'bg-indigo-400 text-white cursor-wait'
                             : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        }`}
+                          }`}
                       >
                         {isBuying ? (
                           <>
@@ -318,8 +334,8 @@ function MarketplacePage() {
                 );
               })}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
     </ProtectedRoute>
   );
