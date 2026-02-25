@@ -575,122 +575,125 @@ function OrganizerDashboard() {
               </div>
             )}
 
-            {/* --- TAB 3: CREATE EVENT FORM --- */}
-            {activeTab === 'create' && (
-              <div className="animate-fade-in max-w-4xl mx-auto">
-                <div className={`${glassCard} p-8`}>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Create New Event</h2>
-                  <form onSubmit={handleCreateSubmit} className="space-y-6">
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="col-span-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Event Name</label>
-                        <input required type="text" className={glassInput} placeholder="Event Name"
-                          value={formData.event} onChange={e => setFormData({ ...formData, event: e.target.value })} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Category</label>
-                        <select className={glassSelect} value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} required>
-                          <option value="">Select Category</option>
-                          {["Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"].map(c => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-                          Location
-                        </label>
-                        <input
-                          required
-                          type="text"
-                          className={glassInput}
-                          placeholder="Address"
-                          value={formData.location}
-                          onChange={e =>
-                            setFormData({ ...formData, location: e.target.value })
-                          }
-                        />
-                        <div className="mt-4">
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-                            Select Event Location on Map
-                          </label>
-
-                          <div className="w-full">
-                            <LocationPicker setCoordinates={setCoordinates} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Date</label>
-                        <input required type="date" className={glassInput}
-                          value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Time</label>
-                        <input required type="time" className={glassInput}
-                          value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white/20 rounded-xl border border-white/30">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Price ($)</label>
-                        <input required type="number" min="0" className={glassInput}
-                          value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Total Tickets</label>
-                        <input required type="number" min="1" className={glassInput}
-                          value={formData.totalTickets} onChange={e => setFormData({ ...formData, totalTickets: e.target.value })} />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Image URL</label>
-                        <input type="text" className={glassInput} placeholder="https://..."
-                          value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} />
-                      </div>
-                    </div>
-
-                    {/* Early Bird Section */}
-                    <div className="p-4 bg-indigo-50/30 rounded-xl border border-indigo-100/50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-indigo-600"
-                          checked={formData.ebEnabled} onChange={e => setFormData({ ...formData, ebEnabled: e.target.checked })} />
-                        <label htmlFor="ebCheck" className="font-bold text-gray-700 cursor-pointer select-none">Enable Early Bird Discount</label>
-                      </div>
-
-                      {formData.ebEnabled && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">Discount Price</label>
-                            <input type="number" min="0" className={glassInput}
-                              value={formData.ebPrice} onChange={e => setFormData({ ...formData, ebPrice: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">End Date</label>
-                            <input type="date" className={glassInput}
-                              value={formData.ebEndDate} onChange={e => setFormData({ ...formData, ebEndDate: e.target.value })} />
-                          </div>
-                          <div>
-                            <label className="block text-xs text-gray-500 mb-1">Limit (Qty)</label>
-                            <input type="number" min="0" className={glassInput}
-                              value={formData.ebMaxTickets} onChange={e => setFormData({ ...formData, ebMaxTickets: e.target.value })} />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex gap-4 pt-4">
-                      <button type="submit" className={`flex-1 ${primaryButton}`}>Create Event</button>
-                      <button type="button" onClick={() => setActiveTab('dashboard')} className={glassButton}>Cancel</button>
-                    </div>
-                  </form>
+           {/* --- TAB 3: CREATE EVENT FORM --- */}
+{activeTab === 'create' && (
+  <div className="animate-fade-in max-w-4xl mx-auto pb-10">
+    <div className={`${glassCard} p-6 md:p-10`}>
+        <h2 className="text-2xl font-bold text-gray-800 mb-8 border-b border-white/30 pb-4">Create New Event</h2>
+        <form onSubmit={handleCreateSubmit} className="space-y-8">
+            
+            {/* Top Section: Name and Category */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Event Name</label>
+                    <input required type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="e.g. Summer Music Festival" 
+                        value={formData.event} onChange={e => setFormData({...formData, event: e.target.value})} />
                 </div>
-              </div>
-            )}
+                
+                <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Category</label>
+                    <select className={`${glassSelect} w-full py-3 px-4`} value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} required>
+                        <option value="">Select Category</option>
+                        {["Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"].map(c => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Location Section - Full Width to prevent squashing */}
+                <div className="md:col-span-2 space-y-4">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Location Address</label>
+                        <input required type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="Enter physical address"
+                          value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
+                    </div>
+                    
+                    <div className="bg-white/30 p-4 rounded-2xl border border-white/50 shadow-sm backdrop-blur-md">
+                      <label className="block text-xs font-bold text-gray-600 uppercase mb-3 text-center">Pinpoint Location</label>
+                      <div className="w-full rounded-xl overflow-hidden shadow-inner bg-gray-100/50 min-h-[320px] flex justify-center">
+                        <LocationPicker setCoordinates={setCoordinates} />
+                      </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Date and Time - Side by Side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2 px-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase ml-1">Date</label>
+                    <input required type="date" className={`${glassInput} w-full py-3 px-4`}
+                        value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                </div>
+                <div className="space-y-2 px-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase ml-1">Time</label>
+                    <input required type="time" className={`${glassInput} w-full py-3 px-4`}
+                        value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
+                </div>
+            </div>
+
+            {/* Pricing and Logistics Group */}
+            <div className="p-6 bg-white/20 rounded-2xl border border-white/40 shadow-sm space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className=" px-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Price ($)</label>
+                        <input required type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
+                            value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                    </div>
+                    <div className=" px-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Total Tickets</label>
+                        <input required type="number" min="1" className={`${glassInput} w-full py-3 px-4`}
+                            value={formData.totalTickets} onChange={e => setFormData({...formData, totalTickets: e.target.value})} />
+                    </div>
+                    <div className="px-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Image URL</label>
+                        <input type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="https://..."
+                            value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Early Bird Section - Enhanced spacing */}
+            <div className="p-6 bg-indigo-50/40 rounded-2xl border border-indigo-100/60 shadow-sm backdrop-blur-sm">
+                <div className="flex items-center gap-3 mb-6">
+                    <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-indigo-600 cursor-pointer shadow-sm" 
+                        checked={formData.ebEnabled} onChange={e => setFormData({...formData, ebEnabled: e.target.checked})} />
+                    <label htmlFor="ebCheck" className="font-bold text-gray-800 cursor-pointer select-none text-sm">Enable Early Bird Discount</label>
+                </div>
+
+                {formData.ebEnabled && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in pt-2">
+                        <div className="space-y-2 px-2">
+                            <label className="block text-xs font-bold text-indigo-800/70 uppercase ml-1">Discount Price ($)</label>
+                            <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`} 
+                                value={formData.ebPrice} onChange={e => setFormData({...formData, ebPrice: e.target.value})} />
+                        </div>
+                        <div className="space-y-2 px-2">
+                            <label className="block text-xs font-bold text-indigo-800/70 uppercase ml-1">Offer Ends On</label>
+                            <input type="date" className={`${glassInput} w-full py-3 px-4`} 
+                                value={formData.ebEndDate} onChange={e => setFormData({...formData, ebEndDate: e.target.value})} />
+                        </div>
+                        <div className="space-y-2 px-2">
+                            <label className="block text-xs font-bold text-indigo-800/70 uppercase ml-1">Max Discount Tickets</label>
+                            <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`} 
+                                value={formData.ebMaxTickets} onChange={e => setFormData({...formData, ebMaxTickets: e.target.value})} />
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col md:flex-row gap-4 pt-6">
+                <button type="submit" className={`flex-[2] ${primaryButton} py-4 shadow-lg shadow-indigo-200/50 outline-none hover:scale-[1.01] transition-transform`}>
+                    Create Event
+                </button>
+                <button type="button" onClick={() => setActiveTab('dashboard')} className={`${glassButton} flex-1 py-4 hover:bg-white/50 outline-none`}>
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+  </div>
+)}
 
           </main>
         </div>
