@@ -81,12 +81,12 @@ function OrganizerDashboard() {
 
     try {
       setLoading(true);
-      const res = await fetch(`/api/events`);
+      const res = await fetch(`/api/events?organizerId=${authUser.uid}`);
       const data = await res.json();
 
       if (data.success && Array.isArray(data.events)) {
-        // Filter events created by this user
-        const myEvents = data.events.filter(ev => ev.organizerId === authUser.uid);
+        // Events are already scoped to this organizer
+        const myEvents = data.events;
         setOrganizerEvents(myEvents);
         calculateAnalytics(myEvents);
       }
@@ -309,13 +309,16 @@ function OrganizerDashboard() {
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-white/40 text-indigo-700 shadow-sm border border-white/50' : 'text-gray-600 hover:bg-white/20'}`}>
+                <button onClick={() => setActiveTab('dashboard')} className={'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/40 text-indigo-700 shadow-sm border border-white/50'}>
                   <DashboardIcon /> Overview
                 </button>
-                <button onClick={() => setActiveTab('events')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'events' ? 'bg-white/40 text-indigo-700 shadow-sm border border-white/50' : 'text-gray-600 hover:bg-white/20'}`}>
+                <button onClick={() => setActiveTab('royalties')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/40 text-indigo-700 shadow-sm border border-white/50`}>
+                  <DollarIcon /> Royalty Info
+                </button>
+                <button onClick={() => setActiveTab('events')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/40 text-indigo-700 shadow-sm border border-white/50`}>
                   <EventIcon /> My Events
                 </button>
-                <button onClick={() => setActiveTab('create')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'create' ? 'bg-white/40 text-indigo-700 shadow-sm border border-white/50' : 'text-gray-600 hover:bg-white/20'}`}>
+                <button onClick={() => setActiveTab('create')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/40 text-indigo-700 shadow-sm border border-white/50`}>
                   <PlusIcon /> Create Event
                 </button>
               </nav>
@@ -363,6 +366,47 @@ function OrganizerDashboard() {
                     <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Active Events</p>
                     <h3 className="text-3xl font-bold text-blue-700">{organizerEvents.length}</h3>
                   </div>
+                </div>
+
+                {/* Recent List */}
+                <div className={`${glassCard} p-6`}>
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Events</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="text-xs text-gray-500 uppercase border-b border-gray-200/50">
+                          <th className="pb-3 pl-2">Event</th>
+                          <th className="pb-3">Date</th>
+                          <th className="pb-3">Sales</th>
+                          <th className="pb-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {organizerEvents.slice(0, 5).map((ev) => (
+                          <tr key={ev._id} className="border-b border-gray-100/30 hover:bg-white/20 transition">
+                            <td className="py-3 pl-2 font-medium text-gray-800">{ev.event}</td>
+                            <td className="py-3 text-gray-500">{new Date(ev.date).toLocaleDateString()}</td>
+                            <td className="py-3 font-bold text-indigo-600">{ev.totalTickets - ev.remainingTickets}</td>
+                            <td className="py-3">
+                              {ev.remainingTickets === 0 ?
+                                <span className="text-red-600 text-xs font-bold bg-red-100 px-2 py-1 rounded">Sold Out</span> :
+                                <span className="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded">Active</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {organizerEvents.length === 0 && <p className="text-center text-gray-500 py-4">No events created yet.</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- TAB: ROYALTY INFO --- */}
+            {activeTab === 'royalties' && (
+              <div className="space-y-8 animate-fade-in">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold text-gray-800">Royalty Info</h2>
                 </div>
 
                 {/* Royalty Settings (off-chain ledger) */}
@@ -491,38 +535,6 @@ function OrganizerDashboard() {
                         {loadingRoyaltyReport ? 'Loading royalty history...' : 'No resale royalties recorded yet.'}
                       </p>
                     )}
-                  </div>
-                </div>
-
-                {/* Recent List */}
-                <div className={`${glassCard} p-6`}>
-                  <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Events</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="text-xs text-gray-500 uppercase border-b border-gray-200/50">
-                          <th className="pb-3 pl-2">Event</th>
-                          <th className="pb-3">Date</th>
-                          <th className="pb-3">Sales</th>
-                          <th className="pb-3">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-sm">
-                        {organizerEvents.slice(0, 5).map((ev) => (
-                          <tr key={ev._id} className="border-b border-gray-100/30 hover:bg-white/20 transition">
-                            <td className="py-3 pl-2 font-medium text-gray-800">{ev.event}</td>
-                            <td className="py-3 text-gray-500">{new Date(ev.date).toLocaleDateString()}</td>
-                            <td className="py-3 font-bold text-indigo-600">{ev.totalTickets - ev.remainingTickets}</td>
-                            <td className="py-3">
-                              {ev.remainingTickets === 0 ?
-                                <span className="text-red-600 text-xs font-bold bg-red-100 px-2 py-1 rounded">Sold Out</span> :
-                                <span className="text-green-600 text-xs font-bold bg-green-100 px-2 py-1 rounded">Active</span>}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {organizerEvents.length === 0 && <p className="text-center text-gray-500 py-4">No events created yet.</p>}
                   </div>
                 </div>
               </div>

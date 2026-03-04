@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Event from "@/models/Event";
 import Ticket from "@/models/Ticket";
+import User from '@/models/User';
 
 export async function GET(req, {params}) {
   const { id }= await params;  
   try {
     await dbConnect();
+
+    const { searchParams } = new URL(req.url);
+    const organizerId = searchParams.get('organizerId');
+    const adminId = searchParams.get('adminId');
 
     // Only fetch non-deleted events
     const event = await Event.findOne({
@@ -16,6 +21,27 @@ export async function GET(req, {params}) {
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    const status = event.approvalStatus;
+    const isLegacyApproved = typeof status === 'undefined' || status === null;
+    const isApproved = status === 'approved' || isLegacyApproved;
+
+    if (!isApproved) {
+      // Allow organizer who created it
+      if (organizerId && organizerId === event.organizerId) {
+        return NextResponse.json(event, { status: 200 });
+      }
+
+      // Allow admin
+      if (adminId) {
+        const admin = await User.findOne({ firebase_uid: adminId }).lean();
+        if (admin?.role === 'admin') {
+          return NextResponse.json(event, { status: 200 });
+        }
+      }
+
+      return NextResponse.json({ error: 'Event not approved yet' }, { status: 404 });
     }
 
     return NextResponse.json(event, { status: 200 });

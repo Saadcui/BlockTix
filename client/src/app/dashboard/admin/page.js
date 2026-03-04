@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import { useAuth } from '@/context/AuthContext';
 import {
   BarChart,
   Bar,
@@ -19,20 +20,25 @@ import {
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
 function AdminTabs() {
+  const { user } = useAuth();
   const [active, setActive] = useState("dashboard");
   const [users, setUsers] = useState([]);
   const [events, setEvents] = useState([]);
+  const [pendingEvents, setPendingEvents] = useState([]);
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [actingOnEventId, setActingOnEventId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // --- LOGIC STARTS: STRICTLY UNTOUCHED ---
   useEffect(() => {
-    fetch("/api/events")
+    if (!user?.uid) return;
+    fetch(`/api/events?includeAll=1&adminId=${user.uid}`)
       .then((res) => res.json())
       .then((data) => {
         setEvents(data.events);
         setLoading(false);
       });
-  }, []);
+  }, [user?.uid]);
 
   useEffect(() => {
     fetch("/api/users")
@@ -50,6 +56,7 @@ function AdminTabs() {
     { key: "dashboard", label: "Dashboard" },
     { key: "users", label: "Attendees" },
     { key: "organizers", label: "Organizers" },
+    { key: "approvals", label: "Approvals" },
     { key: "events", label: "Events" },
   ];
 
@@ -59,10 +66,58 @@ function AdminTabs() {
       .then((data) => setUsers(data));
   };
 
-  const fetchEventsAgain = () => {
-    fetch("/api/events")
+  const fetchEventsAgain = useCallback(() => {
+    if (!user?.uid) return;
+    fetch(`/api/events?includeAll=1&adminId=${user.uid}`)
       .then((res) => res.json())
       .then((data) => setEvents(data.events));
+  }, [user?.uid]);
+
+  const fetchPendingEventsAgain = useCallback(() => {
+    if (!user?.uid) return;
+    setLoadingPending(true);
+    fetch(`/api/admin/events/requests?adminId=${user.uid}`)
+      .then((res) => res.json())
+      .then((data) => setPendingEvents(data.events || []))
+      .finally(() => setLoadingPending(false));
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    fetchPendingEventsAgain();
+  }, [user?.uid, fetchPendingEventsAgain]);
+
+  const approveEvent = async (eventId) => {
+    if (!user?.uid) return;
+    setActingOnEventId(eventId);
+    try {
+      await fetch('/api/admin/events/requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId: user.uid, eventId, action: 'approve' }),
+      });
+      fetchPendingEventsAgain();
+      fetchEventsAgain();
+    } finally {
+      setActingOnEventId(null);
+    }
+  };
+
+  const rejectEvent = async (eventId) => {
+    if (!user?.uid) return;
+    const reason = prompt('Rejection reason (optional):') || '';
+    setActingOnEventId(eventId);
+    try {
+      await fetch('/api/admin/events/requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId: user.uid, eventId, action: 'reject', rejectionReason: reason }),
+      });
+      fetchPendingEventsAgain();
+      fetchEventsAgain();
+    } finally {
+      setActingOnEventId(null);
+    }
   };
 
   const deleteUser = async (id) => {
@@ -133,26 +188,31 @@ function AdminTabs() {
 
   return (
     <>
-      {/* Tab Navigation */}
-      <div className="mt-8 flex justify-center">
-        <div className="inline-flex flex-wrap justify-center gap-1 bg-gray-100/60 backdrop-blur-sm p-1.5 rounded-xl border border-gray-200">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActive(tab.key)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
-                active === tab.key
-                  ? "bg-white text-purple-700 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Sidebar */}
+        <aside className="lg:col-span-3">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-sm">
+            <p className="text-xs uppercase font-bold tracking-wider text-gray-500 mb-3">Menu</p>
+            <nav className="space-y-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActive(tab.key)}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                    active === tab.key
+                      ? 'bg-purple-50 text-purple-700 border border-purple-100'
+                      : 'text-gray-700 hover:bg-gray-50 border border-transparent'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </aside>
 
-      <div className="mt-8">
+        {/* Content */}
+        <section className="lg:col-span-9">
         {/* DASHBOARD - ENHANCED WITH CHARTS */}
         {active === "dashboard" && (
           <div className="space-y-6">
@@ -282,43 +342,108 @@ function AdminTabs() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               {active === "users" ? "Attendee Management" : "Organizer Management"}
             </h2>
-            {((active === "users" ? attendees : organizers).length === 0) ? (
-              <div className="text-center py-12 text-gray-500">
-                No {active === "users" ? "attendees" : "organizers"} found.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {(active === "users" ? attendees : organizers).map((u) => (
-                  <div key={u._id} className={cardClass}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">{u.name}</p>
-                        <p className="text-gray-500 text-sm truncate">{u.email}</p>
-                        <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
-                          {u.role}
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        {active === "organizers" && (
-                          <button
-                            onClick={() => updateUserRole(u._id)}
-                            className="px-3 py-1.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-                          >
-                            Make Admin
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteUser(u._id)}
-                          className="px-3 py-1.5 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
+            {(() => {
+              const rows = active === 'users' ? attendees : organizers;
+              const isOrganizerView = active === 'organizers';
+
+              if (rows.length === 0) {
+                return (
+                  <div className="text-center py-12 text-gray-500">
+                    No {active === "users" ? "attendees" : "organizers"} found.
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              }
+
+              return (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="font-semibold text-gray-800">
+                      {active === 'users' ? 'Attendees' : 'Organizers'}
+                    </h3>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-gray-600">
+                      <thead className="bg-gray-50 text-xs uppercase font-medium text-gray-500">
+                        <tr>
+                          <th className="px-6 py-3">Name</th>
+                          <th className="px-6 py-3">Email</th>
+                          <th className="px-6 py-3">Role</th>
+                          {isOrganizerView && (
+                            <>
+                              <th className="px-6 py-3">Wallet</th>
+                              <th className="px-6 py-3 text-right">Royalty Balance</th>
+                              <th className="px-6 py-3 text-center">Default Royalty</th>
+                            </>
+                          )}
+                          <th className="px-6 py-3">Created</th>
+                          <th className="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+
+                      <tbody className="divide-y divide-gray-100">
+                        {rows.map((u) => (
+                          <tr key={u._id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                              {u.name}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="truncate max-w-[260px]">{u.email}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                {u.role}
+                              </span>
+                            </td>
+
+                            {isOrganizerView && (
+                              <>
+                                <td className="px-6 py-4">
+                                  <div className="truncate max-w-[220px] text-xs text-gray-700">
+                                    {u.walletAddress || '—'}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-right font-medium text-gray-900 whitespace-nowrap">
+                                  Rs {Number(u.royaltyBalance || 0).toFixed(2)}
+                                </td>
+                                <td className="px-6 py-4 text-center whitespace-nowrap">
+                                  {typeof u.defaultRoyaltyBps === 'number'
+                                    ? `${(u.defaultRoyaltyBps / 100).toFixed(2)}%`
+                                    : '—'}
+                                </td>
+                              </>
+                            )}
+
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                              {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                            </td>
+
+                            <td className="px-6 py-4">
+                              <div className="flex justify-end gap-2">
+                                {isOrganizerView && (
+                                  <button
+                                    onClick={() => updateUserRole(u._id)}
+                                    className="px-3 py-1.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+                                  >
+                                    Make Admin
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => deleteUser(u._id)}
+                                  className="px-3 py-1.5 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -377,6 +502,111 @@ function AdminTabs() {
             )}
           </div>
         )}
+
+        {/* APPROVAL REQUESTS */}
+        {active === 'approvals' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Event Approval Requests</h2>
+                <p className="text-gray-600 mt-1">New events created by organizers must be approved before they go live.</p>
+              </div>
+              <button
+                onClick={fetchPendingEventsAgain}
+                className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="font-semibold text-gray-800">Pending Requests</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-gray-600">
+                  <thead className="bg-gray-50 text-xs uppercase font-medium text-gray-500">
+                    <tr>
+                      <th className="px-6 py-3">Event</th>
+                      <th className="px-6 py-3">Organizer</th>
+                      <th className="px-6 py-3">Date</th>
+                      <th className="px-6 py-3">Location</th>
+                      <th className="px-6 py-3">Category</th>
+                      <th className="px-6 py-3 text-right">Price</th>
+                      <th className="px-6 py-3 text-center">Tickets</th>
+                      <th className="px-6 py-3">Submitted</th>
+                      <th className="px-6 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {loadingPending ? (
+                      <tr>
+                        <td colSpan={9} className="px-6 py-10 text-center text-gray-500">
+                          Loading requests...
+                        </td>
+                      </tr>
+                    ) : pendingEvents.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="px-6 py-10 text-center text-gray-500">
+                          No pending approval requests.
+                        </td>
+                      </tr>
+                    ) : (
+                      pendingEvents.map((e) => {
+                        const orgName = e.organizer?.name || e.organizerId || 'Unknown';
+                        const orgEmail = e.organizer?.email || '';
+                        const submitted = e.submittedAt || e.createdAt;
+                        return (
+                          <tr key={e._id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="font-medium text-gray-900">{e.event}</div>
+                              <div className="text-xs text-gray-500">ID: {e.eventId}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="font-medium text-gray-900">{orgName}</div>
+                              {orgEmail ? <div className="text-xs text-gray-500">{orgEmail}</div> : null}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">{new Date(e.date).toLocaleDateString()}</td>
+                            <td className="px-6 py-4">{e.location}</td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                {e.category}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right font-medium text-gray-900">Rs {e.price}</td>
+                            <td className="px-6 py-4 text-center">{e.totalTickets}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                              {submitted ? new Date(submitted).toLocaleString() : '—'}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  disabled={actingOnEventId === e._id}
+                                  onClick={() => approveEvent(e._id)}
+                                  className="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors disabled:opacity-60"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  disabled={actingOnEventId === e._id}
+                                  onClick={() => rejectEvent(e._id)}
+                                  className="px-3 py-1.5 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-60"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+        </section>
       </div>
     </>
   );
@@ -393,9 +623,7 @@ export default function AdminDashboard() {
               <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-gray-600 mt-1">Manage users, organizers, and events</p>
             </div>
-            <div className="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full inline-flex items-center">
-              🔒 Secure Control Panel
-            </div>
+            
           </div>
         </header>
 

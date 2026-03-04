@@ -24,6 +24,8 @@ export async function POST(req) {
         remainingTickets: totalTickets,
         image,
         organizerId,
+        approvalStatus: 'pending',
+        submittedAt: new Date(),
         ...(earlyBird && typeof earlyBird === 'object' ? { earlyBird } : {})
         });
 

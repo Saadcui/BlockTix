@@ -34,8 +34,12 @@ export async function GET(req) {
     const topParam = searchParams.get("top");
     const top = topParam ? Math.max(1, parseInt(topParam, 10) || 3) : 3;
 
-    // 🟢 Base events from MongoDB (exclude soft-deleted)
-    const events = await Event.find({ deleted: { $ne: true } }).lean();
+    // 🟢 Base events from MongoDB (exclude soft-deleted + only approved)
+    // Legacy events without approvalStatus are treated as approved.
+    const events = await Event.find({
+      deleted: { $ne: true },
+      $or: [{ approvalStatus: 'approved' }, { approvalStatus: { $exists: false } }],
+    }).lean();
 
     // If an explicit user id is not provided, try to derive one from the authenticated app user.
     if (!numericUserId && firebase_uid) {

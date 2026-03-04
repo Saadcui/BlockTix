@@ -80,6 +80,41 @@ const eventSchema = new mongoose.Schema({
       type: Date,
       default: null
     }
+      ,
+      approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending',
+        index: true,
+      },
+      submittedAt: {
+        type: Date,
+        default: Date.now,
+        index: true,
+      },
+      approvedAt: {
+        type: Date,
+        default: null,
+      },
+      approvedBy: {
+        type: String,
+        default: null,
+        trim: true,
+      },
+      rejectedAt: {
+        type: Date,
+        default: null,
+      },
+      rejectedBy: {
+        type: String,
+        default: null,
+        trim: true,
+      },
+      rejectionReason: {
+        type: String,
+        default: null,
+        trim: true,
+      }
 }, { timestamps: true });
 
 // Note: Hard deletion prevention is handled in the DELETE API route
