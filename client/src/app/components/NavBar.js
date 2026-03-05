@@ -19,8 +19,15 @@ function Navbar() {
   return (
 
     // NAVBAR CONTAINER
-    <nav className="sticky top-0 z-50 bg-white/20 backdrop-blur-xl border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16 relative">
+    <nav className="sticky top-0 z-50 border-b border-white/10 shadow-md">
+      {/* Strong blur bar (blurs behind, not see-through) */}
+      <div className="relative">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-gray-900/85 backdrop-blur-2xl backdrop-saturate-150"
+        />
+
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16 relative">
 
         {/* Left side: Logo + Links */}
         <div className="flex items-center gap-6">
@@ -75,6 +82,7 @@ function Navbar() {
             )}
           </button>
         </div>
+        </div>
       </div>
 
       {/* MOBILE MENU OVERLAY */}
@@ -82,7 +90,7 @@ function Navbar() {
         isMobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 w-full shadow-xl">
             <div className="relative">
-              <div aria-hidden className="pointer-events-none absolute inset-0 bg-gray-900/80 backdrop-blur-xl border-t border-white/10"></div>
+              <div aria-hidden className="pointer-events-none absolute inset-0 bg-gray-900/85 backdrop-blur-2xl backdrop-saturate-150 border-t border-white/10"></div>
               <div className="relative p-4 flex flex-col gap-3">
 
                 {/* Mobile Links - styles match desktop font weight/color via 'link' class */}

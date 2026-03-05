@@ -242,7 +242,7 @@ export default function Home() {
                       {event.time}
                     </div>
                     <span className="text-[#7C3AED] font-medium text-sm group-hover:translate-x-1 transition-transform">
-                      Get Tickets &rarr;
+                      Get Tickets
                     </span>
                   </div>
                 </div>
