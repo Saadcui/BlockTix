@@ -56,8 +56,18 @@ export async function POST(req) {
     // On-chain royalty receiver is set to organizer wallet if available.
     let mintResult = { txHash: null, tokenId: null };
     try {
-      // Internal metadata URL that serves JSON for the NFT
-      const metadataUri = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/tickets/metadata/${eventId}`;
+      // Internal metadata URL that serves JSON for the NFT.
+      // IMPORTANT: Never mint with a localhost tokenURI; wallets like MetaMask cannot fetch it.
+      const forwardedProto = req.headers.get('x-forwarded-proto');
+      const forwardedHost = req.headers.get('x-forwarded-host');
+      const host = forwardedHost || req.headers.get('host');
+      const protocol = forwardedProto || (host?.includes('localhost') ? 'http' : 'https');
+
+      const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL.trim())
+        ? process.env.NEXT_PUBLIC_BASE_URL.trim().replace(/\/+$/, '')
+        : (host ? `${protocol}://${host}` : 'http://localhost:3000');
+
+      const metadataUri = `${baseUrl}/api/tickets/metadata/${eventId}`;
 
       mintResult = await mintTicketNFT(platformWallet, metadataUri, royaltyBps, organizerWalletAddress);
 
