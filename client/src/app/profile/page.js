@@ -5,7 +5,7 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import Skeleton from '../components/Skeleton';
 
-// --- ICONS ---
+// ICONS
 const UserIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>);
 const LockIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>);
 const TicketIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 12h.01M18 12h.01" /></svg>);
@@ -13,6 +13,11 @@ const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" heig
 const LogOutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>);
 const CalendarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>);
 const IdIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>);
+const StarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>);
+
+// ALL EVENT CATEGORIES
+const ALL_CATEGORIES = ['Music', 'Sports', 'Art', 'Food And Drink', 'Education', 'Festival', 'Other'];
+const CAT_ICONS = { Music: '🎵', Sports: '⚽', Art: '🎨', 'Food And Drink': '🍽️', Education: '📚', Festival: '🎪', Other: '✦' };
 
 function UserProfile() {
   const router = useRouter();
@@ -35,11 +40,17 @@ function UserProfile() {
 
   const [statusMsg, setStatusMsg] = useState({ type: '', msg: '' });
 
-  // --- STYLING CONSTANTS (Enhanced Transparency) ---
+  // PREFERENCES STATE
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [prefCity, setPrefCity] = useState('');
+  const [prefSaving, setPrefSaving] = useState(false);
+  const [prefMsg, setPrefMsg] = useState({ type: '', text: '' });
+
+  // STYLING CONSTANTS
   const glassContainer = "bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden";
   const glassSidebar = "bg-white/5 backdrop-blur-lg border-r border-white/10";
-  const glassContent = "bg-transparent"; // Content sits directly on background
-  const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl"; // Inner cards
+  const glassContent = "bg-transparent";
+  const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl";
   const glassInput = "w-full p-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-[#FFA500]/60 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
   const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition text-white font-medium backdrop-blur-sm shadow-sm";
   const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-white rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
@@ -63,13 +74,62 @@ function UserProfile() {
     fetchUser();
   }, [authUser?.uid]);
 
+  // Load existing preferences when preferences tab is opened
+  useEffect(() => {
+    if (activeTab !== 'preferences' || !authUser?.uid) return;
+    fetch(`/api/preferences/categories?firebase_uid=${authUser.uid}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          setSelectedCategories(data.preferredCategories || []);
+          setPrefCity(data.city || '');
+        }
+      })
+      .catch(console.error);
+  }, [activeTab, authUser?.uid]);
+
   useEffect(() => {
     if (authUser?.mongoEmailSynced) {
       setStatusMsg({ type: 'success', msg: 'Email verified and updated in database successfully.' });
     }
   }, [authUser?.mongoEmailSynced]);
 
-  // --- LOGIC HANDLERS (UNCHANGED) ---
+  // PREFERENCES HANDLERS
+  const toggleCategory = (cat) => {
+    setSelectedCategories(prev =>
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+    setPrefMsg({ type: '', text: '' });
+  };
+
+  const savePreferences = async () => {
+    if (!authUser?.uid) return;
+    setPrefSaving(true);
+    setPrefMsg({ type: '', text: '' });
+    try {
+      const res = await fetch('/api/preferences/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firebase_uid: authUser.uid,
+          categories: selectedCategories,
+          city: prefCity,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPrefMsg({ type: 'success', text: 'Preferences saved! Your recommendations will update.' });
+      } else {
+        setPrefMsg({ type: 'error', text: data.message || 'Failed to save.' });
+      }
+    } catch {
+      setPrefMsg({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setPrefSaving(false);
+    }
+  };
+
+  // LOGIC HANDLERS
   const handleReauthSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -177,15 +237,13 @@ function UserProfile() {
     executeDeleteAccount();
   };
 
-  // Helper to get initials
   const getInitials = (name) => {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'U';
-  }
+  };
 
   if (loading) return (
     <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl flex flex-col md:flex-row min-h-[800px]">
-        {/* Skeleton Sidebar */}
         <aside className="w-full md:w-72 flex-shrink-0 flex flex-col p-6 border-r border-white/10">
           <Skeleton className="h-8 w-3/4 mb-8" />
           <div className="space-y-4">
@@ -194,11 +252,8 @@ function UserProfile() {
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
-          <div className="mt-auto pt-10">
-            <Skeleton className="h-10 w-full" />
-          </div>
+          <div className="mt-auto pt-10"><Skeleton className="h-10 w-full" /></div>
         </aside>
-        {/* Skeleton Content */}
         <main className="flex-1 p-6 md:p-10 space-y-6">
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center gap-6 border border-white/10">
             <Skeleton variant="circle" className="h-24 w-24" />
@@ -218,9 +273,7 @@ function UserProfile() {
 
   return (
     <ProtectedRoute allowedRoles={['user', 'admin', 'organizer']}>
-      {/* 1. Main Background with Gradient Blobs */}
       <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
-        {/* Decorative Background Elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FFA500]/20 blur-[100px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
@@ -246,7 +299,7 @@ function UserProfile() {
             </div>
           )}
 
-          {/* 2. SIDEBAR NAVIGATION */}
+          {/* SIDEBAR NAVIGATION */}
           <aside className={`w-full md:w-72 flex-shrink-0 flex flex-col justify-between p-6 ${glassSidebar}`}>
             <div>
               <div className="mb-8 pl-2">
@@ -257,29 +310,34 @@ function UserProfile() {
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30`}>
+                <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'profile' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
                   <UserIcon /> General Profile
                 </button>
 
-                <button onClick={() => setActiveTab('security')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30`}>
+                {/* ── PREFERENCES TAB BUTTON (Fix 4) ── */}
+                <button onClick={() => setActiveTab('preferences')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'preferences' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
+                  <StarIcon /> Preferences
+                </button>
+
+                <button onClick={() => setActiveTab('security')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'security' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
                   <LockIcon /> Security
                 </button>
-                <button onClick={() => router.push('/dashboard/user')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30`} >
+                <button onClick={() => router.push('/dashboard/user')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
                   <TicketIcon /> My Tickets
                 </button>
                 <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-4"></div>
-                <button onClick={() => setActiveTab('danger')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-red-500/10 text-red-600 border border-red-500/20 `}>
+                <button onClick={() => setActiveTab('danger')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-red-500/10 text-red-600 border border-red-500/20">
                   <TrashIcon /> Delete Account
                 </button>
               </nav>
             </div>
 
-            <button onClick={async () => { await logout(); router.push('/login'); }} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white/80 transition-all text-sm font-medium`}>
+            <button onClick={async () => { await logout(); router.push('/login'); }} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white/80 transition-all text-sm font-medium">
               <LogOutIcon /> Sign Out
             </button>
           </aside>
 
-          {/* 3. MAIN CONTENT AREA */}
+          {/* MAIN CONTENT AREA */}
           <main className={`flex-1 p-6 md:p-10 ${glassContent} overflow-y-auto`}>
 
             {statusMsg.msg && (
@@ -291,7 +349,6 @@ function UserProfile() {
             {/* TAB: GENERAL PROFILE */}
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-fade-in">
-                {/* Hero Profile Header */}
                 <div className={`${glassCard} p-6 flex flex-col md:flex-row items-center md:items-start gap-6`}>
                   <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#FFA500] to-[#FFA500] flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50">
                     {getInitials(userData?.name)}
@@ -312,7 +369,6 @@ function UserProfile() {
                   </div>
                 </div>
 
-                {/* Edit Form */}
                 {isEditingProfile && (
                   <div className={`${glassCard} p-6 md:p-8 border-l-4 border-l-[#FFA500]`}>
                     <h3 className="text-lg font-bold text-white mb-4">Edit Details</h3>
@@ -329,7 +385,6 @@ function UserProfile() {
                   </div>
                 )}
 
-                {/* Info Grid (More Details Added) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className={`${glassCard} p-5`}>
                     <div className="flex items-center gap-3 mb-2 text-[#FFA500]">
@@ -357,13 +412,82 @@ function UserProfile() {
               </div>
             )}
 
+            {/* ── TAB: PREFERENCES */}
+            {activeTab === 'preferences' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className={`${glassCard} p-6 md:p-8`}>
+                  <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                    <StarIcon /> Event Preferences
+                  </h2>
+                  <p className="text-white/60 text-sm mb-6">
+                    Select the categories you enjoy and your city. We use these to personalise your event recommendations.
+                  </p>
+
+                  {/* Category grid */}
+                  <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">Favourite Categories</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
+                    {ALL_CATEGORIES.map(cat => {
+                      const isSelected = selectedCategories.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => toggleCategory(cat)}
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                          style={{
+                            border     : isSelected ? '1.5px solid #FFA500' : '1px solid rgba(255,255,255,0.15)',
+                            background : isSelected ? 'rgba(255,165,0,0.18)' : 'rgba(255,255,255,0.06)',
+                            color      : isSelected ? '#FFA500' : 'rgba(255,255,255,0.75)',
+                          }}
+                        >
+                          <span>{CAT_ICONS[cat]}</span>
+                          <span className="truncate">{cat}</span>
+                          {isSelected && <span className="ml-auto text-xs">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* City input */}
+                  <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">Your City</h3>
+                  <input
+                    type="text"
+                    placeholder="e.g., Lahore, Karachi, Islamabad"
+                    value={prefCity}
+                    onChange={e => setPrefCity(e.target.value)}
+                    className={`${glassInput} mb-6`}
+                  />
+
+                  {/* Status message */}
+                  {prefMsg.text && (
+                    <div className={`p-3 rounded-xl mb-4 text-sm ${prefMsg.type === 'success' ? 'bg-green-100/20 text-green-300 border border-green-500/30' : 'bg-red-100/20 text-red-300 border border-red-500/30'}`}>
+                      {prefMsg.text}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={savePreferences}
+                    disabled={prefSaving}
+                    className={primaryButton}
+                    style={{ opacity: prefSaving ? 0.7 : 1 }}
+                  >
+                    {prefSaving ? 'Saving...' : 'Save Preferences'}
+                  </button>
+
+                  {selectedCategories.length > 0 && (
+                    <p className="mt-3 text-xs text-white/40">
+                      {selectedCategories.length} categor{selectedCategories.length === 1 ? 'y' : 'ies'} selected
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* TAB: SECURITY */}
             {activeTab === 'security' && (
               <div className="space-y-6 animate-fade-in">
                 <div className={`${glassCard} p-6 md:p-8`}>
                   <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><LockIcon /> Login Credentials</h2>
 
-                  {/* Email */}
                   <div className="mb-8">
                     <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Update Email Address</label>
                     <form onSubmit={handleUpdateEmail} className="space-y-4">
@@ -374,7 +498,6 @@ function UserProfile() {
                     </form>
                   </div>
 
-                  {/* Password */}
                   <div>
                     <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Change Password</label>
                     <form onSubmit={handleUpdatePassword} className="space-y-4">

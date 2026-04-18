@@ -1,247 +1,206 @@
-const fs = require("fs");
-const path = require("path");
+const fs   = require('fs');
+const path = require('path');
 
+const MODEL_PATH = path.join(__dirname, 'model_weights.json');
 
-// Event categories
+// Tunable weights
+const ALPHA = 0.7;  // CF
+const BETA  = 0.3;  // Location
+const CLICK_WEIGHT = 0.4;
 
 const EVENT_CATEGORIES = [
-  "Art",
-  "Sports",
-  "Food And Drink",
-  "Education",
-  "Festival",
-  "Music",
-  "Other",
-  "All",
+  'Music', 'Sports', 'Art', 'Food And Drink',
+  'Education', 'Festival', 'Other',
 ];
 
-// Event category mapping
+// Cached model
+let MODEL = null;
 
-const GENRE_TO_CATEGORY = {
-  Action: "Sports",
-  Adventure: "Sports",
-  Animation: "Art",
-  Children: "Food And Drink",
-  Comedy: "Food And Drink",
-  Crime: "Other",
-  Documentary: "Education",
-  Drama: "Art",
-  Fantasy: "Festival",
-  "Film-Noir": "Other",
-  Horror: "Festival",
-  Musical: "Music",
-  Mystery: "Other",
-  Romance: "Food And Drink",
-  "Sci-Fi": "Education",
-  Thriller: "Other",
-  War: "Education",
-  Western: "Other",
-  IMAX: "Other",
-};
+function loadModel() {
+  if (MODEL) return MODEL;
 
-
-function splitCSVLine(line) {
-  const parts = line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/);
-  return parts.map((p) => {
-    let s = p.trim();
-    if (s.startsWith("\"") && s.endsWith("\"")) s = s.slice(1, -1);
-    return s;
-  });
-}
-
-function parseCSV(content) {
-  const lines = content.split(/\r?\n/).filter((l) => l.trim() !== "");
-  const headers = splitCSVLine(lines[0]);
-  const rows = lines.slice(1).map((line) => {
-    const cols = splitCSVLine(line);
-    const obj = {};
-    headers.forEach((h, i) => (obj[h] = cols[i]));
-    return obj;
-  });
-  return rows;
-}
-
-
-// DATA LOADING (CACHED)
-
-let CACHE = null;
-let USER_MATRIX = null;
-
-function mapGenresToCategories(genresField) {
-  if (!genresField || genresField === "(no genres listed)") return ["Other"];
-  const genres = genresField.split("|");
-  const set = new Set();
-  for (const g of genres) set.add(GENRE_TO_CATEGORY[g] || "Other");
-  return [...set];
-}
-
-function loadData() {
-  if (CACHE) return CACHE;
-
-  const moviesPath = path.join(__dirname, "movies.csv");
-  const ratingsPath = path.join(__dirname, "ratings.csv");
-
-  if (!fs.existsSync(moviesPath) || !fs.existsSync(ratingsPath)) {
-    throw new Error("MovieLens CSV files not found in ml/");
+  if (!fs.existsSync(MODEL_PATH)) {
+    throw new Error('model_weights.json not found. Run: node ml/train.js');
   }
 
-  const moviesCSV = parseCSV(fs.readFileSync(moviesPath, "utf8"));
-  const ratingsCSV = parseCSV(fs.readFileSync(ratingsPath, "utf8"));
+  MODEL = JSON.parse(fs.readFileSync(MODEL_PATH, 'utf8'));
 
-  const moviesMap = new Map();
-  moviesCSV.forEach((m) => {
-    moviesMap.set(
-      String(m.movieId),
-      mapGenresToCategories(m.genres)
+  const { meta } = MODEL;
+  console.log(`[BlockTix ML] Model loaded — ${meta.algorithm}`);
+  console.log(`[BlockTix ML] Factors: ${meta.nFactors} | RMSE: ${meta.finalRMSE}`);
+
+  return MODEL;
+}
+
+// Math Helpers
+
+
+function dot(a, b) {
+  let s = 0;
+  for (let k = 0; k < a.length; k++) s += a[k] * b[k];
+  return s;
+}
+
+// Normalize MF score → 0–1
+function sigmoid(x) {
+  return 1 / (1 + Math.exp(-x));
+}
+
+// Location scoring
+function getLocationScore(userCity, eventCity) {
+  if (!userCity || !eventCity) return 0.5;
+  if (userCity === eventCity) return 1.0;
+  return 0.3;
+}
+
+// Core Scoring
+
+function mfCategoryScores(userId) {
+  const {
+    userIdx, eventIdx, eventIds,
+    P, Q, eventCat, eventCity, userCity
+  } = loadModel();
+
+  const uid = String(userId);
+  if (userIdx[uid] === undefined) return null;
+
+  const ui = userIdx[uid];
+
+  const catScore = {};
+  const catCount = {};
+
+  for (const eid of eventIds) {
+    const ei  = eventIdx[eid];
+    const cat = eventCat[eid];
+
+    if (!cat || ei === undefined) continue;
+
+    // CF score
+    const cfScore = sigmoid(dot(P[ui], Q[ei]));
+
+    // Location score
+    const locScore = getLocationScore(
+      userCity?.[uid],
+      eventCity?.[eid]
     );
-  });
 
-  const ratings = ratingsCSV.map((r) => ({
-    userId: String(r.userId),
-    movieId: String(r.movieId),
-    rating: Number(r.rating),
-  }));
+    // Hybrid score
+    const finalScore = ALPHA * cfScore + BETA * locScore;
 
-  CACHE = { moviesMap, ratings };
-  return CACHE;
-}
-
-
-//USER–ITEM MATRIX
-
-function buildUserMatrix() {
-  const { ratings } = loadData();
-  const matrix = {};
-
-  for (const r of ratings) {
-    if (!matrix[r.userId]) matrix[r.userId] = {};
-    matrix[r.userId][r.movieId] = r.rating;
+    catScore[cat] = (catScore[cat] || 0) + finalScore;
+    catCount[cat] = (catCount[cat] || 0) + 1;
   }
-  return matrix;
-}
 
-function getUserMatrix() {
-  if (!USER_MATRIX) USER_MATRIX = buildUserMatrix();
-  return USER_MATRIX;
-}
-
-
-// COLLABORATIVE FILTERING
-
-function cosineSimilarity(a, b) {
-  let dot = 0, normA = 0, normB = 0;
-
-  for (const k in a) {
-    if (b[k]) dot += a[k] * b[k];
-    normA += a[k] ** 2;
+  const result = {};
+  for (const cat in catScore) {
+    result[cat] = catScore[cat] / catCount[cat];
   }
-  for (const k in b) normB += b[k] ** 2;
 
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB) || 1);
+  return result;
 }
 
-function getSimilarUsers(userId, k = 5) {
-  const matrix = getUserMatrix();
-  const target = matrix[userId];
-  if (!target) return [];
+// Global fallback
 
-  return Object.entries(matrix)
-    .filter(([uid]) => uid !== userId)
-    .map(([uid, ratings]) => ({
-      userId: uid,
-      sim: cosineSimilarity(target, ratings),
-    }))
-    .filter((u) => u.sim > 0)
-    .sort((a, b) => b.sim - a.sim)
-    .slice(0, k);
+function globalTopCategories(top) {
+  const { eventCat } = loadModel();
+
+  const counts = {};
+  for (const cat of Object.values(eventCat)) {
+    counts[cat] = (counts[cat] || 0) + 1;
+  }
+
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, top)
+    .map(([cat]) => cat);
 }
 
+// Public API
 
-// CATEGORY SCORING (CF-BASED)
+async function getRecommendedCategories(userId, top = 3, clickScores = {}) {
+  const scores = mfCategoryScores(userId);
 
-function computeCategoryStatsCF(userId) {
-  const { moviesMap } = loadData();
-  const matrix = getUserMatrix();
-  const neighbors = getSimilarUsers(userId);
+  if (!scores) {
+    return globalTopCategories(top);
+  }
 
-  const score = {};
-  const weight = {};
+  // Normalize clicks
+  const maxClicks = Math.max(1, ...Object.values(clickScores));
 
-  for (const n of neighbors) {
-    const ratings = matrix[n.userId];
-    for (const movieId in ratings) {
-      const cats = moviesMap.get(movieId) || ["Other"];
-      for (const c of cats) {
-        score[c] = (score[c] || 0) + ratings[movieId] * n.sim;
-        weight[c] = (weight[c] || 0) + n.sim;
-      }
+  const combined = { ...scores };
+
+  for (const [cat, clicks] of Object.entries(clickScores)) {
+    const normalized = clicks / maxClicks;
+    combined[cat] = (combined[cat] || 0) + CLICK_WEIGHT * normalized;
+  }
+
+  const ranked = Object.entries(combined)
+    .filter(([c]) => c !== 'All')
+    .sort((a, b) => b[1] - a[1])
+    .map(([c]) => c)
+    .slice(0, top);
+
+  // Padding
+  if (ranked.length < top) {
+    for (const c of globalTopCategories(top)) {
+      if (!ranked.includes(c)) ranked.push(c);
+      if (ranked.length === top) break;
     }
   }
 
-  return Object.keys(score)
-    .map((c) => ({
+  return ranked;
+}
+
+async function getRecommendedCategoriesVerbose(userId, top = 3, clickScores = {}) {
+  const scores = mfCategoryScores(userId);
+
+  if (!scores) {
+    return globalTopCategories(top).map(c => ({
       category: c,
-      avg: score[c] / (weight[c] || 1),
-      count: weight[c],
-    }))
-    .sort((a, b) => b.avg - a.avg);
-}
-
-
-// COLD-START FALLBACK
-
-function getGlobalTopCategories(top = 3) {
-  const { ratings, moviesMap } = loadData();
-  const stats = {};
-
-  for (const r of ratings) {
-    const cats = moviesMap.get(r.movieId) || ["Other"];
-    for (const c of cats) {
-      if (!stats[c]) stats[c] = { sum: 0, count: 0 };
-      stats[c].sum += r.rating;
-      stats[c].count++;
-    }
-  }
-
-  return Object.entries(stats)
-    .map(([c, v]) => ({ category: c, avg: v.sum / v.count }))
-    .sort((a, b) => b.avg - a.avg)
-    .slice(0, top)
-    .map((v) => v.category);
-}
-
-
-async function getRecommendedCategories(userId, top = 3) {
-  const matrix = getUserMatrix();
-
-  if (!matrix[userId]) {
-    return getGlobalTopCategories(top);
-  }
-
-  return computeCategoryStatsCF(userId)
-    .filter((a) => a.category !== "All")
-    .slice(0, top)
-    .map((a) => a.category);
-}
-
-async function getRecommendedCategoriesVerbose(userId, top = 3) {
-  const matrix = getUserMatrix();
-
-  if (!matrix[userId]) {
-    return getGlobalTopCategories(top).map((c) => ({
-      category: c,
-      avg: 0,
-      count: 0,
+      score: 0,
+      method: 'global_popularity',
     }));
   }
 
-  return computeCategoryStatsCF(userId)
-    .filter((a) => a.category !== "All")
-    .slice(0, top);
+  const maxClicks = Math.max(1, ...Object.values(clickScores));
+  const combined = { ...scores };
+
+  for (const [cat, clicks] of Object.entries(clickScores)) {
+    const normalized = clicks / maxClicks;
+    combined[cat] = (combined[cat] || 0) + CLICK_WEIGHT * normalized;
+  }
+
+  const result = Object.entries(combined)
+    .filter(([c]) => c !== 'All')
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, top)
+    .map(([c, s]) => ({
+      category: c,
+      score: Math.round(s * 10000) / 10000,
+      method: 'hybrid_cf_location_click',
+    }));
+
+  while (result.length < top) {
+    for (const c of globalTopCategories(top)) {
+      if (!result.find(r => r.category === c)) {
+        result.push({
+          category: c,
+          score: 0,
+          method: 'global_popularity'
+        });
+      }
+      if (result.length === top) break;
+    }
+  }
+
+  return result;
 }
 
+// Utilities
+
 function getKnownUserIds() {
-  return Object.keys(getUserMatrix()).sort((a, b) => Number(a) - Number(b));
+  const { userIds } = loadModel();
+  return userIds.map(Number).sort((a, b) => a - b);
 }
 
 module.exports = {

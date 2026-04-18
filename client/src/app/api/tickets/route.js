@@ -139,6 +139,15 @@ export async function POST(req) {
 
     await event.save();
 
+    // Record purchase as recommendation signal
+    if (userId && event.category) {
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/preferences/click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firebase_uid: userId, category: event.category }),
+      }).catch(() => {});
+    }
+
     return new Response(JSON.stringify({ success: true, ticket }), { status: 201 });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
