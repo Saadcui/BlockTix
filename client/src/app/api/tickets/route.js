@@ -60,9 +60,21 @@ export async function POST(req) {
       const host = forwardedHost || req.headers.get('host');
       const protocol = forwardedProto || (host?.includes('localhost') ? 'http' : 'https');
 
-      const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL.trim())
+      const configuredBaseUrl = (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL.trim())
         ? process.env.NEXT_PUBLIC_BASE_URL.trim().replace(/\/+$/, '')
-        : (host ? `${protocol}://${host}` : 'http://localhost:3000');
+        : null;
+
+      const inferredBaseUrl = host ? `${protocol}://${host}` : 'http://localhost:3000';
+      const baseUrl = configuredBaseUrl || inferredBaseUrl;
+
+      const isLocalMetadataUrl = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?(\/|$)/i.test(baseUrl);
+      const rpcUrl = process.env.BLOCKCHAIN_RPC_URL || '';
+      const isLocalRpc = /(localhost|127\.0\.0\.1|0\.0\.0\.0)/i.test(rpcUrl);
+      if (isLocalMetadataUrl && !isLocalRpc) {
+        throw new Error(
+          "Refusing to mint with a localhost metadata URL on a non-local RPC. Set NEXT_PUBLIC_BASE_URL to your deployed HTTPS domain (e.g. https://block-tix-theta.vercel.app)."
+        );
+      }
 
       const metadataUri = `${baseUrl}/api/tickets/metadata/${eventId}`;
 
