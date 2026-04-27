@@ -52,12 +52,9 @@ export async function POST(req) {
     }
 
     // Mint the NFT
-    // The contract uses _nextTokenId++ which ensures each mint gets a unique tokenId
-    // On-chain royalty receiver is set to organizer wallet if available.
+  
     let mintResult = { txHash: null, tokenId: null };
     try {
-      // Internal metadata URL that serves JSON for the NFT.
-      // IMPORTANT: Never mint with a localhost tokenURI; wallets like MetaMask cannot fetch it.
       const forwardedProto = req.headers.get('x-forwarded-proto');
       const forwardedHost = req.headers.get('x-forwarded-host');
       const host = forwardedHost || req.headers.get('host');
@@ -83,8 +80,7 @@ export async function POST(req) {
       }
     } catch (mintError) {
       console.error("Minting failed:", mintError);
-      // If minting fails, we still create the ticket but mark it as failed/pending
-      // This allows users to retry later
+      
     }
 
     const ticketData = {
@@ -100,7 +96,6 @@ export async function POST(req) {
       royaltyReceiverWallet: organizerWalletAddress
     };
 
-    // Only add tokenId and txHash if they exist to avoid unique index collisions with nulls
     if (mintResult.tokenId !== null && mintResult.tokenId !== undefined) {
       ticketData.tokenId = mintResult.tokenId;
     }
@@ -113,18 +108,16 @@ export async function POST(req) {
     try {
       await ticket.save();
     } catch (saveError) {
-      // Handle duplicate key errors (txHash or tokenId)
       if (saveError.code === 11000) {
         const duplicateField = Object.keys(saveError.keyPattern || {})[0];
         if (duplicateField === 'txHash') {
-          // Transaction already processed - fetch existing ticket
+
           const existingTicket = await Ticket.findOne({ txHash: mintResult.txHash });
           return new Response(JSON.stringify({
             error: "This transaction has already been processed",
             ticket: existingTicket
           }), { status: 409 });
         } else if (duplicateField === 'tokenId' || saveError.message.includes('contractAddress_1_tokenId_1')) {
-          // This shouldn't happen, but handle it gracefully
           console.error("Duplicate tokenId detected - this should not happen with blockchain sequential IDs");
           return new Response(JSON.stringify({
             error: "A ticket with this tokenId already exists. Please contact support."

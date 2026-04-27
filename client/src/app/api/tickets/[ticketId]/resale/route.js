@@ -5,22 +5,6 @@ import Event from '@/models/Event';
 import { returnToCustody } from '@/lib/blockchain';
 import User from '@/models/User';
 
-/**
- * POST /api/tickets/[ticketId]/resale
- * 
- * Actions:
- *   list   – List a ticket for resale on the marketplace.
- *            The NFT is returned to platform custody so the platform can transfer it to the buyer.
- *   delist – Cancel a listing. Ticket is removed from marketplace and stays in platform custody.
- *            The user can then claim it back to their wallet via the claim endpoint.
- *   buy    – Purchase a listed ticket. Royalty is calculated and recorded.
- *            The organizer receives a royalty cut, the seller receives the remainder.
- *
- * body examples:
- *   { action: 'list',   sellerId: '...', price: 100 }
- *   { action: 'delist', sellerId: '...' }
- *   { action: 'buy',    buyerId: '...' }
- */
 export async function POST(req, { params }) {
     try {
         await dbConnect();
@@ -32,9 +16,7 @@ export async function POST(req, { params }) {
             return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
         }
 
-        // ───────────────────────────────────────────────
-        // ACTION: LIST – Put ticket on the marketplace
-        // ───────────────────────────────────────────────
+        // LIST ticket on the marketplace
         if (action === 'list') {
             if (!sellerId) {
                 return NextResponse.json({ error: "Seller ID is required" }, { status: 400 });
@@ -103,9 +85,7 @@ export async function POST(req, { params }) {
             }, { status: 200 });
         }
 
-        // ───────────────────────────────────────────────
-        // ACTION: DELIST – Remove ticket from marketplace
-        // ───────────────────────────────────────────────
+        // DELIST from marketplace
         else if (action === 'delist') {
             if (!sellerId) {
                 return NextResponse.json({ error: "Seller ID is required" }, { status: 400 });
@@ -113,17 +93,14 @@ export async function POST(req, { params }) {
             if (!ticket.isForResale) {
                 return NextResponse.json({ error: "Ticket is not currently listed for resale" }, { status: 400 });
             }
-            // Only the person who listed it (or the current owner) can delist
             if (ticket.listedBy !== sellerId && ticket.userId !== sellerId) {
                 return NextResponse.json({ error: "You are not authorized to delist this ticket" }, { status: 403 });
             }
 
-            // Remove from marketplace — ticket stays in platform custody
-            // User can claim it back to their wallet via /api/tickets/[ticketId]/claim
+            // Remove from marketplace
             ticket.isForResale = false;
             ticket.resalePrice = null;
             ticket.listedBy = null;
-            // Keep custodial = true — the user needs to explicitly claim back
 
             await ticket.save();
 
@@ -134,9 +111,7 @@ export async function POST(req, { params }) {
             }, { status: 200 });
         }
 
-        // ───────────────────────────────────────────────
         // ACTION: BUY – Purchase a listed ticket
-        // ───────────────────────────────────────────────
         else if (action === 'buy') {
             if (!ticket.isForResale) {
                 return NextResponse.json({ error: "Ticket is not for sale" }, { status: 400 });
@@ -151,9 +126,7 @@ export async function POST(req, { params }) {
             const resalePrice = ticket.resalePrice;
             const sellerId = ticket.listedBy || ticket.userId;
 
-            // ── Calculate royalty (OFF-CHAIN) ──
-            // IMPORTANT: Payments are off-chain (platform gateway), and resalePrice is in fiat (e.g. Rs).
-            // ERC-2981's royaltyInfo expects prices in the chain's native units, so we use the stored bps.
+            // Calculate royalty (OFF-CHAIN)
             const royaltyBps = typeof ticket.royaltyBps === 'number' ? ticket.royaltyBps : 500;
             const royaltyAmount = (resalePrice * royaltyBps) / 10000;
 

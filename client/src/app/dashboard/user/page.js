@@ -260,7 +260,7 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen px-6 py-8">
+      <main className="min-h-screen px-6 py-8 bg-white/10 backdrop-blur-sm">
         {/* Header */}
         <div className="max-w-7xl mx-auto mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">My Tickets</h1>
