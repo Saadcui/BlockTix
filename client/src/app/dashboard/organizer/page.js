@@ -326,7 +326,6 @@ function OrganizerDashboard() {
             <Skeleton className="h-32 w-full" />
             <Skeleton className="h-32 w-full" />
           </div>
-          <Skeleton className="h-64 w-full" />
         </main>
       </div>
     </div>
@@ -355,24 +354,20 @@ function OrganizerDashboard() {
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('dashboard')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words">
+                <button onClick={() => setActiveTab('dashboard')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words">
                   <DashboardIcon /> Overview
                 </button>
-                <button onClick={() => setActiveTab('royalties')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('royalties')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <DollarIcon /> Royalty Info
                 </button>
-                <button onClick={() => setActiveTab('events')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('events')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <EventIcon /> My Events
                 </button>
-                <button onClick={() => setActiveTab('create')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('create')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <PlusIcon /> Create Event
                 </button>
               </nav>
             </div>
-
-            <button onClick={async () => { await logout(); router.push('/login'); }} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/30 border border-white/10 text-white/80 transition-all text-sm font-medium`}>
-              <LogOutIcon /> Sign Out
-            </button>
           </aside>
 
           {/* MAIN CONTENT AREA */}

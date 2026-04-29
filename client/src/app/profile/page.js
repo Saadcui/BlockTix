@@ -243,7 +243,7 @@ function UserProfile() {
 
   if (loading) return (
     <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
-      <div className="max-w-6xl mx-auto relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl flex flex-col md:flex-row min-h-[800px]">
+      <div className="max-w-7xl mx-auto relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl flex flex-col md:flex-row min-h-[850px]">
         <aside className="w-full md:w-72 flex-shrink-0 flex flex-col p-6 border-r border-white/10">
           <Skeleton className="h-8 w-3/4 mb-8" />
           <div className="space-y-4">
@@ -280,7 +280,7 @@ function UserProfile() {
           <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-[#FFA500]/10 blur-[80px]"></div>
         </div>
 
-        <div className={`max-w-6xl mx-auto relative z-10 ${glassContainer} flex flex-col md:flex-row min-h-[800px]`}>
+        <div className={`max-w-7xl mx-auto relative z-10 ${glassContainer} flex flex-col md:flex-row min-h-[850px]`}>
 
           {/* RE-AUTH MODAL */}
           {showReauthModal && (
@@ -310,31 +310,34 @@ function UserProfile() {
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'profile' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
+                <button onClick={() => setActiveTab('profile')} className={'sm:w-full w-80 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
                   <UserIcon /> General Profile
                 </button>
 
                 {/* ── PREFERENCES TAB BUTTON (Fix 4) ── */}
-                <button onClick={() => setActiveTab('preferences')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'preferences' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
+                <button onClick={() => setActiveTab('preferences')} className={'sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
                   <StarIcon /> Preferences
                 </button>
 
-                <button onClick={() => setActiveTab('security')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'security' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
+                <button onClick={() => setActiveTab('security')} className={'sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
                   <LockIcon /> Security
                 </button>
-                <button onClick={() => router.push('/dashboard/user')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
+
+                <button onClick={() => router.push('/dashboard/user')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
                   <TicketIcon /> My Tickets
                 </button>
-                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-4"></div>
-                <button onClick={() => setActiveTab('danger')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-red-500/10 text-red-600 border border-red-500/20">
+
+                <button onClick={() => setActiveTab('danger')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-red-500/10 text-red-600 border border-red-500/20">
                   <TrashIcon /> Delete Account
                 </button>
+            
+                <button onClick={async () => { await logout(); router.push('/login'); }} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
+                  <LogOutIcon /> Sign Out
+                </button>
+
               </nav>
             </div>
-
-            <button onClick={async () => { await logout(); router.push('/login'); }} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white/80 transition-all text-sm font-medium">
-              <LogOutIcon /> Sign Out
-            </button>
+            
           </aside>
 
           {/* MAIN CONTENT AREA */}
@@ -350,7 +353,7 @@ function UserProfile() {
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-fade-in">
                 <div className={`${glassCard} p-6 flex flex-col md:flex-row items-center md:items-start gap-6`}>
-                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#FFA500] to-[#FFA500] flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50">
+                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#FFA500] to-[#0d0c0b] flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50">
                     {getInitials(userData?.name)}
                   </div>
                   <div className="text-center md:text-left flex-1">

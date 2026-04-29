@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
-import ChatbotRag from './components/Ragchatbot';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 
 export default function Home() {
@@ -187,12 +186,12 @@ export default function Home() {
           Find and purchase tickets for the best events near you, secured by blockchain technology to prevent fraud and ensure authenticity.
         </p>
 
-        <div className="relative mt-8 w-full flex justify-center z-20 px-4">
-          <div className="relative w-full max-w-md group">
+        <div className="relative mt-8 flex justify-center z-20 px-4 w-80">
+          <div className="relative max-w-md group">
             <input
               type="text"
               placeholder="Search for events..."
-              className="w-full bg-white/10 border border-white/20 backdrop-blur-md text-white placeholder-white/60 rounded-full pl-6 pr-12 py-3 shadow-lg focus:outline-none focus:bg-white/15 focus:border-[#FFA500]/50 focus:ring-2 focus:ring-[#FFA500]/20 transition-all duration-300"
+              className="sm:w-80 w-40  bg-white/10 border border-white/20 backdrop-blur-md text-white placeholder-white/60 rounded-full pl-6 pr-12 py-3 shadow-lg focus:outline-none focus:bg-white/15 focus:border-[#FFA500]/50 focus:ring-2 focus:ring-[#FFA500]/20 transition-all duration-300"
               onChange={e => setSearchInput(e.target.value)}
               value={searchInput}
             />
@@ -287,7 +286,6 @@ export default function Home() {
         </div>
       </div>
 
-      <ChatbotRag user={user} />
     </div>
   );
 }
