@@ -65,14 +65,19 @@ export async function POST(req) {
       );
     }
 
-    // Atomic toggle to avoid races that can trigger E11000 on userId
-    const pullRes = await Wishlist.updateOne(
-      { userId: firebase_uid },
-      { $pull: { savedEvents: event._id } }
+    const wishlist = await Wishlist.findOne({ userId: firebase_uid })
+      .select('savedEvents')
+      .lean();
+
+    const alreadySaved = (wishlist?.savedEvents || []).some(
+      (id) => id.toString() === event._id.toString()
     );
 
-    const removedCount = (pullRes.modifiedCount ?? pullRes.nModified ?? 0);
-    if (removedCount > 0) {
+    if (alreadySaved) {
+      await Wishlist.updateOne(
+        { userId: firebase_uid },
+        { $pull: { savedEvents: event._id } }
+      );
       return NextResponse.json({ success: true, saved: false });
     }
 

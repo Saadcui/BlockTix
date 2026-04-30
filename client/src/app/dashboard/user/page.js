@@ -373,7 +373,7 @@ export default function Dashboard() {
             pastTickets.length === 0 ? (
               <div className="flex flex-col items-center py-12 text-center">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No Past Events</h3>
-                <p className="text-gray-700 dark:text-white/70">You haven't attended any events yet.</p>
+                <p className="text-gray-700 dark:text-white/70">You have not attended any events yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -398,7 +398,7 @@ export default function Dashboard() {
               <div className="flex flex-col items-center py-12 text-center">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No Saved Events</h3>
                 <p className="text-gray-700 dark:text-white/70 mb-5">
-                  Save events by clicking the ❤️ button on any event page.
+                  Save events by clicking the button on any event page.
                 </p>
                 <button onClick={() => router.push('/discover')} className="btn-sm">
                   Browse Events
