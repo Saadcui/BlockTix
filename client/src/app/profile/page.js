@@ -1,9 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import Skeleton from '../components/Skeleton';
+import LocationPicker from '../components/LocationPicker';
 
 // ICONS
 const UserIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>);
@@ -32,6 +34,8 @@ function UserProfile() {
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newBio, setNewBio] = useState('');
+  const [newProfilePicture, setNewProfilePicture] = useState('');
 
   // Re-Auth Modal State
   const [showReauthModal, setShowReauthModal] = useState(false);
@@ -45,6 +49,13 @@ function UserProfile() {
   const [prefCity, setPrefCity] = useState('');
   const [prefSaving, setPrefSaving] = useState(false);
   const [prefMsg, setPrefMsg] = useState({ type: '', text: '' });
+  const [prefLocation, setPrefLocation] = useState({ lat: null, lng: null });
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [hasLoadedPreferences, setHasLoadedPreferences] = useState(false);
+  const [locationChangeFromUser, setLocationChangeFromUser] = useState(false);
+  const [geoPromptShown, setGeoPromptShown] = useState(false);
+  const [showGeoPermissionPrompt, setShowGeoPermissionPrompt] = useState(false);
+  const autoSaveLocationTimerRef = useRef(null);
 
   // STYLING CONSTANTS
   const glassContainer = "bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl overflow-hidden";
@@ -65,6 +76,8 @@ function UserProfile() {
         setUserData(data);
         setNewName(data.name);
         setNewEmail(data.email);
+        setNewBio(data.bio || '');
+        setNewProfilePicture(data.profilePicture || '');
       } catch (err) {
         console.error(err);
       } finally {
@@ -77,15 +90,25 @@ function UserProfile() {
   // Load existing preferences when preferences tab is opened
   useEffect(() => {
     if (activeTab !== 'preferences' || !authUser?.uid) return;
+    setHasLoadedPreferences(false);
+    setGeoPromptShown(false);
+    setShowGeoPermissionPrompt(false);
+    setLocationChangeFromUser(false);
     fetch(`/api/preferences/categories?firebase_uid=${authUser.uid}`)
       .then(r => r.json())
       .then(data => {
         if (data.success) {
           setSelectedCategories(data.preferredCategories || []);
           setPrefCity(data.city || '');
+          setPrefLocation({
+            lat: data.location?.lat ?? null,
+            lng: data.location?.lng ?? null,
+         });
+          setLocationChangeFromUser(false);
         }
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setHasLoadedPreferences(true));
   }, [activeTab, authUser?.uid]);
 
   useEffect(() => {
@@ -93,6 +116,55 @@ function UserProfile() {
       setStatusMsg({ type: 'success', msg: 'Email verified and updated in database successfully.' });
     }
   }, [authUser?.mongoEmailSynced]);
+
+
+  // Geo Location Handlers
+  const handleLocationChange = ({ lat, lng }) => {
+    const roundCoord = (n) => {
+      const num = Number(n);
+      return Number.isFinite(num) ? Number(num.toFixed(6)) : null;
+    };
+
+    setPrefLocation({
+      lat: lat == null ? null : roundCoord(lat),
+      lng: lng == null ? null : roundCoord(lng),
+    });
+    setLocationChangeFromUser(true);
+  };
+
+  const setCurrentLocation = () => {
+  if (!navigator?.geolocation) {
+    setPrefMsg({ type: "error", text: "Geolocation is not supported in this browser." });
+    return;
+  }
+
+  setGeoLoading(true);
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      setPrefLocation({
+        lat: Number(pos.coords.latitude.toFixed(6)),
+        lng: Number(pos.coords.longitude.toFixed(6)),
+      });
+        setLocationChangeFromUser(true);
+        setShowGeoPermissionPrompt(false);
+      setPrefMsg({ type: "success", text: "Current location captured." });
+      setGeoLoading(false);
+    },
+    () => {
+      setPrefMsg({ type: "error", text: "Unable to fetch location. Allow location permission and retry." });
+      setGeoLoading(false);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+  };
+
+  const clearLocation = () => {
+  setPrefLocation({ lat: null, lng: null });
+  setLocationChangeFromUser(true);
+  setGeoPromptShown(false);
+  setShowGeoPermissionPrompt(true);
+  };
 
   // PREFERENCES HANDLERS
   const toggleCategory = (cat) => {
@@ -102,10 +174,10 @@ function UserProfile() {
     setPrefMsg({ type: '', text: '' });
   };
 
-  const savePreferences = async () => {
+  const savePreferences = async ({ silent = false } = {}) => {
     if (!authUser?.uid) return;
     setPrefSaving(true);
-    setPrefMsg({ type: '', text: '' });
+    if (!silent) setPrefMsg({ type: '', text: '' });
     try {
       const res = await fetch('/api/preferences/categories', {
         method: 'POST',
@@ -114,11 +186,14 @@ function UserProfile() {
           firebase_uid: authUser.uid,
           categories: selectedCategories,
           city: prefCity,
+          location: prefLocation,
         }),
       });
       const data = await res.json();
       if (data.success) {
-        setPrefMsg({ type: 'success', text: 'Preferences saved! Your recommendations will update.' });
+        if (!silent) {
+          setPrefMsg({ type: 'success', text: 'Preferences saved! Your recommendations will update.' });
+        }
       } else {
         setPrefMsg({ type: 'error', text: data.message || 'Failed to save.' });
       }
@@ -128,6 +203,43 @@ function UserProfile() {
       setPrefSaving(false);
     }
   };
+
+  // Auto-save location when the user changes it (map pin / current location).
+  useEffect(() => {
+    if (!hasLoadedPreferences) return;
+    if (!locationChangeFromUser) return;
+    if (prefSaving) return;
+
+    if (autoSaveLocationTimerRef.current) {
+      clearTimeout(autoSaveLocationTimerRef.current);
+    }
+
+    autoSaveLocationTimerRef.current = setTimeout(() => {
+      savePreferences({ silent: true }).finally(() => setLocationChangeFromUser(false));
+    }, 800);
+
+    return () => {
+      if (autoSaveLocationTimerRef.current) clearTimeout(autoSaveLocationTimerRef.current);
+    };
+  }, [prefLocation?.lat, prefLocation?.lng, hasLoadedPreferences, locationChangeFromUser, prefSaving]);
+
+  // Prompt the user to enable location if none is saved yet.
+  useEffect(() => {
+    if (activeTab !== 'preferences') return;
+    if (!hasLoadedPreferences) return;
+    if (geoPromptShown) return;
+    if (prefLocation?.lat == null || prefLocation?.lng == null) {
+      setShowGeoPermissionPrompt(true);
+      setGeoPromptShown(true);
+    }
+  }, [activeTab, hasLoadedPreferences, geoPromptShown, prefLocation?.lat, prefLocation?.lng]);
+
+  // If a location is present, we can safely hide the prompt.
+  useEffect(() => {
+    if (prefLocation?.lat != null && prefLocation?.lng != null) {
+      setShowGeoPermissionPrompt(false);
+    }
+  }, [prefLocation?.lat, prefLocation?.lng]);
 
   // LOGIC HANDLERS
   const handleReauthSubmit = async (e) => {
@@ -153,7 +265,12 @@ function UserProfile() {
       const res = await fetch(`/api/users/${userData._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName }),
+        body: JSON.stringify({
+          name: newName,
+          ...(userData.role === 'organizer' || userData.role === 'admin'
+            ? { bio: newBio, profilePicture: newProfilePicture }
+            : {}),
+        }),
       });
       if (!res.ok) throw new Error('Update failed');
       const updated = await res.json();
@@ -243,7 +360,7 @@ function UserProfile() {
 
   if (loading) return (
     <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
-      <div className="max-w-6xl mx-auto relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl flex flex-col md:flex-row min-h-[800px]">
+      <div className="max-w-7xl mx-auto relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl flex flex-col md:flex-row min-h-[850px]">
         <aside className="w-full md:w-72 flex-shrink-0 flex flex-col p-6 border-r border-white/10">
           <Skeleton className="h-8 w-3/4 mb-8" />
           <div className="space-y-4">
@@ -280,7 +397,7 @@ function UserProfile() {
           <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-[#FFA500]/10 blur-[80px]"></div>
         </div>
 
-        <div className={`max-w-6xl mx-auto relative z-10 ${glassContainer} flex flex-col md:flex-row min-h-[800px]`}>
+        <div className={`max-w-7xl mx-auto relative z-10 ${glassContainer} flex flex-col md:flex-row min-h-[850px]`}>
 
           {/* RE-AUTH MODAL */}
           {showReauthModal && (
@@ -310,31 +427,34 @@ function UserProfile() {
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'profile' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
+                <button onClick={() => setActiveTab('profile')} className={'sm:w-full w-80 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
                   <UserIcon /> General Profile
                 </button>
 
                 {/* ── PREFERENCES TAB BUTTON (Fix 4) ── */}
-                <button onClick={() => setActiveTab('preferences')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'preferences' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
+                <button onClick={() => setActiveTab('preferences')} className={'sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
                   <StarIcon /> Preferences
                 </button>
 
-                <button onClick={() => setActiveTab('security')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${activeTab === 'security' ? 'bg-[#FFA500]/20 text-[#FFA500] border border-[#FFA500]/30' : 'bg-white/10 text-white border border-white/20 hover:bg-white/30'}`}>
+                <button onClick={() => setActiveTab('security')} className={'sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
                   <LockIcon /> Security
                 </button>
-                <button onClick={() => router.push('/dashboard/user')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
+
+                <button onClick={() => router.push('/dashboard/user')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
                   <TicketIcon /> My Tickets
                 </button>
-                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-4"></div>
-                <button onClick={() => setActiveTab('danger')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-red-500/10 text-red-600 border border-red-500/20">
+
+                <button onClick={() => setActiveTab('danger')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-red-500/10 text-red-600 border border-red-500/20">
                   <TrashIcon /> Delete Account
                 </button>
+            
+                <button onClick={async () => { await logout(); router.push('/login'); }} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
+                  <LogOutIcon /> Sign Out
+                </button>
+
               </nav>
             </div>
-
-            <button onClick={async () => { await logout(); router.push('/login'); }} className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white/80 transition-all text-sm font-medium">
-              <LogOutIcon /> Sign Out
-            </button>
+            
           </aside>
 
           {/* MAIN CONTENT AREA */}
@@ -350,8 +470,12 @@ function UserProfile() {
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-fade-in">
                 <div className={`${glassCard} p-6 flex flex-col md:flex-row items-center md:items-start gap-6`}>
-                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#FFA500] to-[#FFA500] flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50">
-                    {getInitials(userData?.name)}
+                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#FFA500] to-[#0d0c0b] flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white/50 overflow-hidden">
+                    {userData?.profilePicture ? (
+                      <Image src={userData.profilePicture} alt={userData?.name || 'Profile'} width={96} height={96} className="h-full w-full object-cover" />
+                    ) : (
+                      getInitials(userData?.name)
+                    )}
                   </div>
                   <div className="text-center md:text-left flex-1">
                     <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
@@ -377,9 +501,34 @@ function UserProfile() {
                         <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Full Name</label>
                         <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className={glassInput} />
                       </div>
+                      {(userData.role === 'organizer' || userData.role === 'admin') && (
+                        <>
+                          <div>
+                            <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Organizer Bio</label>
+                            <textarea
+                              value={newBio}
+                              onChange={(e) => setNewBio(e.target.value)}
+                              maxLength={1000}
+                              rows={4}
+                              className={glassInput}
+                              placeholder="Tell attendees what kind of events you create."
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Profile Picture URL</label>
+                            <input
+                              type="url"
+                              value={newProfilePicture}
+                              onChange={(e) => setNewProfilePicture(e.target.value)}
+                              className={glassInput}
+                              placeholder="https://..."
+                            />
+                          </div>
+                        </>
+                      )}
                       <div className="flex gap-3">
                         <button type="submit" className={primaryButton}>Save Changes</button>
-                        <button type="button" onClick={() => { setIsEditingProfile(false); setNewName(userData.name); }} className={glassButton}>Cancel</button>
+                        <button type="button" onClick={() => { setIsEditingProfile(false); setNewName(userData.name); setNewBio(userData.bio || ''); setNewProfilePicture(userData.profilePicture || ''); }} className={glassButton}>Cancel</button>
                       </div>
                     </form>
                   </div>
@@ -415,6 +564,33 @@ function UserProfile() {
             {/* ── TAB: PREFERENCES */}
             {activeTab === 'preferences' && (
               <div className="space-y-6 animate-fade-in">
+                {showGeoPermissionPrompt && (
+                  <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-md p-4">
+                    <div className="bg-gray-900/80 p-6 rounded-2xl shadow-2xl max-w-md w-full m-4 border border-white/10">
+                      <h3 className="text-xl font-bold text-white mb-2">Enable location?</h3>
+                      <p className="text-white/70 text-sm mb-5">
+                        Turn on location to automatically save your nearby area.
+                      </p>
+                      <div className="flex gap-3 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setShowGeoPermissionPrompt(false)}
+                          className="px-4 py-2 text-white/70 hover:bg-white/10 rounded-lg border border-white/10"
+                        >
+                          Not now
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentLocation()}
+                          disabled={geoLoading}
+                          className="px-4 py-2 bg-[#FFA500] text-white rounded-lg hover:opacity-90 disabled:opacity-70"
+                        >
+                          {geoLoading ? 'Detecting...' : 'Enable location'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className={`${glassCard} p-6 md:p-8`}>
                   <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
                     <StarIcon /> Event Preferences
@@ -456,6 +632,28 @@ function UserProfile() {
                     onChange={e => setPrefCity(e.target.value)}
                     className={`${glassInput} mb-6`}
                   />
+
+                  <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">
+                  Location
+                  </h3>
+
+                  <p className="text-xs text-white/50 mb-3">
+                    Search a place, click the map, or drag the marker. Use “My Location” to choose your current position.
+                  </p>
+
+                  <div className="w-full mb-4 rounded-xl overflow-hidden border border-white/10 bg-white/5">
+                    <LocationPicker
+                      value={prefLocation}
+                      setCoordinates={(coords) => handleLocationChange(coords)}
+                    />
+                  </div>
+
+                  <div className="flex gap-3 mb-4">
+                    <button type="button" onClick={clearLocation} className={glassButton}>
+                      Clear Location
+                    </button>
+                  </div>
+
 
                   {/* Status message */}
                   {prefMsg.text && (

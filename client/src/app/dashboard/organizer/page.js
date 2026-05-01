@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
@@ -14,8 +13,7 @@ const EventIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" heig
 const PlusIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>);
 const DollarIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>);
 const UsersIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>);
-const LogOutIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>);
-const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>);
+const EditIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>);
 
 
 const LocationPicker = dynamic(
@@ -25,8 +23,7 @@ const LocationPicker = dynamic(
 
 
 function OrganizerDashboard() {
-  const router = useRouter();
-  const { user: authUser, logout } = useAuth();
+  const { user: authUser } = useAuth();
   const [coordinates, setCoordinates] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
@@ -42,6 +39,8 @@ function OrganizerDashboard() {
 
   const [royaltyReport, setRoyaltyReport] = useState({ totalRoyaltyEarned: 0, resaleCount: 0, recent: [] });
   const [loadingRoyaltyReport, setLoadingRoyaltyReport] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const isEditing = Boolean(editingEvent);
 
   // --- FORM STATE ---
   const [formData, setFormData] = useState({
@@ -56,7 +55,7 @@ function OrganizerDashboard() {
   const glassContent = "bg-transparent";
   const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl";
   const glassInput = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
-  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white";
+  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white [&>option]:bg-gray-900 [&>option]:text-white";
   const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition text-white/80 font-medium backdrop-blur-sm shadow-sm";
   const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-white rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
 
@@ -201,6 +200,16 @@ function OrganizerDashboard() {
     }
   };
 
+  const resetEventForm = () => {
+    setFormData({
+      event: '', date: '', time: '', location: '', category: '',
+      price: 0, totalTickets: 0, image: '',
+      ebEnabled: false, ebPrice: 0, ebEndDate: '', ebMaxTickets: 0
+    });
+    setCoordinates(null);
+    setEditingEvent(null);
+  };
+
   // --- ACTIONS ---
 
   const handleCreateSubmit = async (e) => {
@@ -233,8 +242,20 @@ function OrganizerDashboard() {
         } : { enabled: false }
       };
 
-      const res = await fetch('/api/organizer', {
-        method: 'POST',
+      const isEditing = Boolean(editingEvent);
+      const url = isEditing ? `/api/events/${editingEvent._id}` : '/api/organizer';
+      const method = isEditing ? 'PUT' : 'POST';
+
+      if (isEditing) {
+        const prevTotal = Number(editingEvent.totalTickets || 0);
+        const prevRemaining = Number(editingEvent.remainingTickets || 0);
+        const nextTotal = Number(formData.totalTickets);
+        const delta = nextTotal - prevTotal;
+        payload.remainingTickets = Math.max(0, prevRemaining + delta);
+      }
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
@@ -242,16 +263,12 @@ function OrganizerDashboard() {
       const data = await res.json();
 
       if (res.ok) {
-        toast.success("Event created successfully!");
-        setFormData({ // Reset Form
-          event: '', date: '', time: '', location: '', category: '',
-          price: 0, totalTickets: 0, image: '',
-          ebEnabled: false, ebPrice: 0, ebEndDate: '', ebMaxTickets: 0
-        });
-        await fetchAndProcessEvents(); // Refresh data
-        setActiveTab('events'); // Go to list view
+        toast.success(isEditing ? "Event updated successfully!" : "Event created successfully!");
+        resetEventForm();
+        await fetchAndProcessEvents();
+        setActiveTab('events');
       } else {
-        toast.error(data.message || "Failed to create event");
+        toast.error(data.message || (isEditing ? "Failed to update event" : "Failed to create event"));
       }
     } catch (error) {
       console.error(error);
@@ -259,23 +276,27 @@ function OrganizerDashboard() {
     }
   };
 
-  const handleDeleteEvent = async (id) => {
-    if (!confirm("Are you sure you want to delete this event?")) return;
-    try {
-      const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        toast.success("Event deleted");
-        const updated = organizerEvents.filter(e => e._id !== id);
-        setOrganizerEvents(updated);
-        calculateAnalytics(updated);
-      } else {
-        toast.error("Delete failed");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Error deleting event");
+  const startEditEvent = (ev) => {
+    setEditingEvent(ev);
+    setActiveTab('create');
+    setFormData({
+      event: ev.event || '',
+      date: ev.date ? new Date(ev.date).toISOString().slice(0, 10) : '',
+      time: ev.time || '',
+      location: ev.location || '',
+      category: ev.category || '',
+      price: ev.price || 0,
+      totalTickets: ev.totalTickets || 0,
+      image: ev.image || '',
+      ebEnabled: Boolean(ev.earlyBird?.enabled),
+      ebPrice: ev.earlyBird?.discountPrice || 0,
+      ebEndDate: ev.earlyBird?.endDate ? new Date(ev.earlyBird.endDate).toISOString().slice(0, 10) : '',
+      ebMaxTickets: ev.earlyBird?.maxTickets || 0
+    });
+    if (typeof ev.latitude === 'number' && typeof ev.longitude === 'number') {
+      setCoordinates({ lat: ev.latitude, lng: ev.longitude });
     }
-  }
+  };
 
   // --- RENDER ---
   if (loading) return (
@@ -302,7 +323,6 @@ function OrganizerDashboard() {
             <Skeleton className="h-32 w-full" />
             <Skeleton className="h-32 w-full" />
           </div>
-          <Skeleton className="h-64 w-full" />
         </main>
       </div>
     </div>
@@ -331,24 +351,20 @@ function OrganizerDashboard() {
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('dashboard')} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words">
+                <button onClick={() => setActiveTab('dashboard')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words">
                   <DashboardIcon /> Overview
                 </button>
-                <button onClick={() => setActiveTab('royalties')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('royalties')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <DollarIcon /> Royalty Info
                 </button>
-                <button onClick={() => setActiveTab('events')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('events')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <EventIcon /> My Events
                 </button>
-                <button onClick={() => setActiveTab('create')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('create')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
                   <PlusIcon /> Create Event
                 </button>
               </nav>
             </div>
-
-            <button onClick={async () => { await logout(); router.push('/login'); }} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/30 border border-white/10 text-white/80 transition-all text-sm font-medium`}>
-              <LogOutIcon /> Sign Out
-            </button>
           </aside>
 
           {/* MAIN CONTENT AREA */}
@@ -368,7 +384,7 @@ function OrganizerDashboard() {
                       <DollarIcon />
                     </div>
                     <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
-                      <h3 className="text-3xl font-bold text-[#FFA500]">${analytics.totalRevenue.toLocaleString()}</h3>
+                      <h3 className="text-3xl font-bold text-[#FFA500]">Rs {analytics.totalRevenue.toLocaleString()}</h3>
                   </div>
 
                   {/* Tickets Sold */}
@@ -391,28 +407,32 @@ function OrganizerDashboard() {
                 </div>
 
                 {/* Recent List */}
-                <div className={`${glassCard} p-6`}>
-                  <h3 className="text-lg font-bold text-white mb-4">Recent Events</h3>
+                <div className={`${glassCard} overflow-hidden`}>
+                  <div className="px-6 py-4 border-b border-white/10">
+                    <h3 className="text-lg font-bold text-white">Recent Events</h3>
+                  </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="text-xs text-white/60 uppercase border-b border-white/10">
-                          <th className="pb-3 pl-2">Event</th>
-                          <th className="pb-3">Date</th>
-                          <th className="pb-3">Sales</th>
-                          <th className="pb-3">Status</th>
+                    <table className="w-full text-left text-sm text-white/80">
+                      <thead className="bg-white/5 text-xs uppercase font-medium text-white/60">
+                        <tr>
+                          <th className="px-6 py-3">Event</th>
+                          <th className="px-6 py-3">Date</th>
+                          <th className="px-6 py-3 text-center">Sales</th>
+                          <th className="px-6 py-3 text-right">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="text-sm">
+                      <tbody className="divide-y divide-white/10">
                         {organizerEvents.slice(0, 5).map((ev) => (
-                          <tr key={ev._id} className="border-b border-white/10 hover:bg-white/10 transition">
-                            <td className="py-3 pl-2 font-medium text-white">{ev.event}</td>
-                            <td className="py-3 text-white/60">{new Date(ev.date).toLocaleDateString()}</td>
-                            <td className="py-3 font-bold text-[#FFA500]">{ev.totalTickets - ev.remainingTickets}</td>
-                            <td className="py-3">
-                              {ev.remainingTickets === 0 ?
-                                <span className="text-red-200 text-xs font-bold bg-red-500/10 px-2 py-1 rounded border border-red-400/20">Sold Out</span> :
-                                <span className="text-green-200 text-xs font-bold bg-green-500/10 px-2 py-1 rounded border border-green-400/20">Active</span>}
+                          <tr key={ev._id} className="hover:bg-white/5 transition-colors">
+                            <td className="px-6 py-4 font-medium text-white">{ev.event}</td>
+                            <td className="px-6 py-4 text-white/60">{new Date(ev.date).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 text-center font-bold text-[#FFA500]">{ev.totalTickets - ev.remainingTickets}</td>
+                            <td className="px-6 py-4 text-right">
+                              {ev.remainingTickets === 0 ? (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-200 border border-red-400/20">Sold Out</span>
+                              ) : (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-200 border border-green-400/20">Active</span>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -523,28 +543,28 @@ function OrganizerDashboard() {
                   </div>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="text-xs text-white/60 uppercase border-b border-white/10">
-                          <th className="pb-3 pl-2">Event</th>
-                          <th className="pb-3">Date</th>
-                          <th className="pb-3">Royalty</th>
-                          <th className="pb-3">Price</th>
-                          <th className="pb-3">From</th>
-                          <th className="pb-3">To</th>
+                    <table className="w-full text-left text-sm text-white/80">
+                      <thead className="bg-white/5 text-xs uppercase font-medium text-white/60">
+                        <tr>
+                          <th className="px-6 py-3">Event</th>
+                          <th className="px-6 py-3">Date</th>
+                          <th className="px-6 py-3 text-right">Royalty</th>
+                          <th className="px-6 py-3 text-right">Price</th>
+                          <th className="px-6 py-3">From</th>
+                          <th className="px-6 py-3">To</th>
                         </tr>
                       </thead>
-                      <tbody className="text-sm">
+                      <tbody className="divide-y divide-white/10">
                         {(royaltyReport.recent || []).map((row, idx) => (
-                          <tr key={`${row.ticketId || 't'}-${idx}`} className="border-b border-white/10 hover:bg-white/10 transition">
-                            <td className="py-3 pl-2 font-medium text-white">{row.event?.event || '—'}</td>
-                            <td className="py-3 text-white/60">
+                          <tr key={`${row.ticketId || 't'}-${idx}`} className="hover:bg-white/5 transition-colors">
+                            <td className="px-6 py-4 font-medium text-white">{row.event?.event || '—'}</td>
+                            <td className="px-6 py-4 text-white/60">
                               {row.resale?.transactionDate ? new Date(row.resale.transactionDate).toLocaleString() : '—'}
                             </td>
-                            <td className="py-3 font-bold text-[#FFA500]">Rs {Number(row.resale?.royaltyAmount || 0).toFixed(2)}</td>
-                            <td className="py-3 text-white/80">Rs {Number(row.resale?.resalePrice || 0).toFixed(2)}</td>
-                            <td className="py-3 text-white/70">{row.resale?.sellerId || '—'}</td>
-                            <td className="py-3 text-white/70">{row.resale?.buyerId || '—'}</td>
+                            <td className="px-6 py-4 text-right font-bold text-[#FFA500]">Rs {Number(row.resale?.royaltyAmount || 0).toFixed(2)}</td>
+                            <td className="px-6 py-4 text-right text-white/80">Rs {Number(row.resale?.resalePrice || 0).toFixed(2)}</td>
+                            <td className="px-6 py-4 text-white/70">{row.resale?.sellerId || '—'}</td>
+                            <td className="px-6 py-4 text-white/70">{row.resale?.buyerId || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -596,8 +616,8 @@ function OrganizerDashboard() {
                           <div className="text-xs text-white/60 uppercase">Stock</div>
                           <div className="font-bold text-white/80">{ev.remainingTickets} / {ev.totalTickets}</div>
                         </div>
-                        <button onClick={() => handleDeleteEvent(ev._id)} className="p-2 bg-red-500/10 hover:bg-red-500/15 text-red-200 rounded-xl transition border border-red-400/20">
-                          <TrashIcon />
+                        <button onClick={() => startEditEvent(ev)} className="p-2 bg-white/10 hover:bg-white/20 text-white/80 rounded-xl transition border border-white/10">
+                          <EditIcon />
                         </button>
                       </div>
                     </div>
@@ -611,7 +631,12 @@ function OrganizerDashboard() {
             {activeTab === 'create' && (
               <div className="animate-fade-in max-w-4xl mx-auto pb-10">
                 <div className={`${glassCard} p-6 md:p-10`}>
-                  <h2 className="text-2xl font-bold text-white mb-8 border-b border-white/10 pb-4">Create New Event</h2>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-8 border-b border-white/10 pb-4">
+                    <h2 className="text-2xl font-bold text-white">{isEditing ? 'Edit Event' : 'Create New Event'}</h2>
+                    {isEditing && (
+                      <button type="button" onClick={resetEventForm} className={glassButton}>Cancel Edit</button>
+                    )}
+                  </div>
                   <form onSubmit={handleCreateSubmit} className="space-y-8">
 
                     {/* Top Section: Name and Category */}
@@ -716,7 +741,7 @@ function OrganizerDashboard() {
                     {/* Action Buttons */}
                     <div className="flex flex-col md:flex-row gap-4 pt-6">
                       <button type="submit" className={`flex-[2] ${primaryButton} py-4 shadow-lg shadow-[#FFA500]/20 outline-none hover:scale-[1.01] transition-transform`}>
-                        Create Event
+                        {isEditing ? 'Edit Event' : 'Create Event'}
                       </button>
                       <button type="button" onClick={() => setActiveTab('dashboard')} className={`${glassButton} flex-1 py-4 outline-none`}>
                         Cancel
