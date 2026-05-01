@@ -4,6 +4,7 @@ import Ticket from "@/models/Ticket";
 import dbConnect from '@/lib/dbConnect';
 import { mintTicketNFT } from '@/lib/blockchain';
 import User from '@/models/User';
+import { getStripe, fromStripeAmount } from '@/lib/stripe';
 
 
 //route for creating tickets
@@ -11,26 +12,60 @@ export async function POST(req) {
   try {
     await dbConnect();
 
-    const { eventId, userId } = await req.json();
+    const { eventId, userId, stripeSessionId } = await req.json();
 
+    if (!eventId || !userId || !stripeSessionId) {
+      return new Response(JSON.stringify({
+        error: "A completed Stripe payment is required before a ticket can be issued."
+      }), { status: 400 });
+    }
+
+    const existingPaidTicket = await Ticket.findOne({ stripeCheckoutSessionId: stripeSessionId });
+    if (existingPaidTicket) {
+      return new Response(JSON.stringify({ success: true, ticket: existingPaidTicket, alreadyProcessed: true }), { status: 200 });
+    }
+
+    const stripe = getStripe();
+    const checkoutSession = await stripe.checkout.sessions.retrieve(stripeSessionId, {
+      expand: ['payment_intent'],
+    });
+
+    if (checkoutSession.payment_status !== 'paid') {
+      return new Response(JSON.stringify({
+        error: "Payment was not completed. Your ticket has not been created."
+      }), { status: 402 });
+    }
+
+    if (checkoutSession.metadata?.userId !== userId) {
+      return new Response(JSON.stringify({
+        error: "This payment session does not belong to the current user."
+      }), { status: 403 });
+    }
+
+    if (checkoutSession.metadata?.eventId !== String(eventId)) {
+      return new Response(JSON.stringify({
+        error: "This payment session does not match the selected event."
+      }), { status: 400 });
+    }
 
     const event = await Event.findById(eventId);
     if (!event) {
       return new Response(JSON.stringify({ error: "Event not found" }), { status: 404 });
     }
-    let ticketPrice = event.price; // default regular price
-    if (
-      event.earlyBird?.enabled &&
-      new Date() <= new Date(event.earlyBird.endDate) &&
-      event.earlyBird.soldCount < event.earlyBird.maxTickets
-    ) {
-      ticketPrice = event.earlyBird.discountPrice;
-      event.earlyBird.soldCount += 1; // track early bird sales
-    }
-
 
     if (event.remainingTickets <= 0) {
-      return new Response(JSON.stringify({ error: "Tickets sold out" }), { status: 400 });
+      return new Response(JSON.stringify({
+        error: "Tickets sold out. Payment was received, but no ticket was issued. Please contact support for a refund."
+      }), { status: 409 });
+    }
+
+    const paidAmount = fromStripeAmount(checkoutSession.amount_total || 0, checkoutSession.currency);
+    const ticketPrice = Number(checkoutSession.metadata?.price);
+
+    if (!Number.isFinite(ticketPrice) || Math.abs(paidAmount - ticketPrice) > 0.01) {
+      return new Response(JSON.stringify({
+        error: "Payment amount could not be verified. Your ticket has not been created."
+      }), { status: 400 });
     }
 
     const platformWallet = process.env.PLATFORM_CUSTODY_ADDRESS;
@@ -105,7 +140,15 @@ export async function POST(req) {
       originalOrganizerId: event.organizerId,
       originalPurchasePrice: ticketPrice,
       royaltyBps,
-      royaltyReceiverWallet: organizerWalletAddress
+      royaltyReceiverWallet: organizerWalletAddress,
+      paymentProvider: "stripe",
+      paymentStatus: "paid",
+      stripeCheckoutSessionId: checkoutSession.id,
+      stripePaymentIntentId: typeof checkoutSession.payment_intent === 'string'
+        ? checkoutSession.payment_intent
+        : checkoutSession.payment_intent?.id,
+      amountPaid: paidAmount,
+      paymentCurrency: checkoutSession.currency
     };
 
     if (mintResult.tokenId !== null && mintResult.tokenId !== undefined) {
@@ -122,7 +165,14 @@ export async function POST(req) {
     } catch (saveError) {
       if (saveError.code === 11000) {
         const duplicateField = Object.keys(saveError.keyPattern || {})[0];
-        if (duplicateField === 'txHash') {
+        if (duplicateField === 'stripeCheckoutSessionId') {
+          const existingTicket = await Ticket.findOne({ stripeCheckoutSessionId: checkoutSession.id });
+          return new Response(JSON.stringify({
+            success: true,
+            ticket: existingTicket,
+            alreadyProcessed: true
+          }), { status: 200 });
+        } else if (duplicateField === 'txHash') {
 
           const existingTicket = await Ticket.findOne({ txHash: mintResult.txHash });
           return new Response(JSON.stringify({
@@ -140,7 +190,9 @@ export async function POST(req) {
     }
 
     event.remainingTickets -= 1;
-    event.earlyBird.soldCount = (event.earlyBird.soldCount || 0) + 1; // increment sold count
+    if (checkoutSession.metadata?.earlyBirdActive === 'true' && event.earlyBird?.enabled) {
+      event.earlyBird.soldCount = (event.earlyBird.soldCount || 0) + 1;
+    }
 
     await event.save();
 

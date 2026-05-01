@@ -1,13 +1,15 @@
+//app/event/[id]/page.js
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '@/context/AuthContext';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import dynamic from 'next/dynamic';
+import Skeleton from '@/app/components/Skeleton';
 
-// Fire-and-forget — must never throw or block the UI
+// Fire-and-forget: must never throw or block the UI
 function recordInteraction(firebase_uid, event_id, interaction_type) {
   if (!firebase_uid || !event_id) return;
   fetch('/api/recommendations/record', {
@@ -19,7 +21,9 @@ function recordInteraction(firebase_uid, event_id, interaction_type) {
 
 function Event() {
   const params = useParams();
-  const id     = params.id;   // eventId UUID
+  const router = useRouter();
+  const id = params.id; // eventId UUID
+  const checkoutFinalizedRef = useRef(false);
 
   const [event,      setEvent]      = useState(null);
   const [loading,    setLoading]    = useState(true);
@@ -35,7 +39,7 @@ function Event() {
     { ssr: false }
   );
 
-  async function fetchEvent() {
+  const fetchEvent = useCallback(async () => {
     try {
       const res  = await fetch(`/api/events/${id}`);
       const data = await res.json();
@@ -45,12 +49,12 @@ function Event() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
 
   // Fetch event on mount
   useEffect(() => {
     if (id) fetchEvent();
-  }, [id]);
+  }, [id, fetchEvent]);
 
   // Record "view" once event is loaded and user is known
   useEffect(() => {
@@ -102,20 +106,28 @@ function Event() {
       toast.error('Login to buy tickets');
       return;
     }
+    if (!event || event.remainingTickets <= 0) {
+      toast.error('This event is sold out');
+      return;
+    }
+
     try {
       setIsBuying(true);
-      const res = await fetch('/api/tickets', {
+      const res = await fetch('/api/stripe/checkout', {
         method : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body   : JSON.stringify({ eventId: event._id, userId: user.uid }),
+        body   : JSON.stringify({
+          eventId: id,
+          userId: user.uid,
+          userEmail: user.email,
+        }),
       });
       const data = await res.json();
 
       if (!res.ok) { toast.error(data.error || 'Something went wrong'); return; }
+      if (!data.url) { toast.error('Unable to open Stripe Checkout'); return; }
 
-      toast.success('🎟️ Ticket purchased successfully!');
-      recordInteraction(user.uid, id, 'purchase');
-      fetchEvent();
+      window.location.href = data.url;
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -123,7 +135,113 @@ function Event() {
     }
   }
 
-  if (loading) return <div className="min-h-screen animate-pulse" />;
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const checkoutStatus = searchParams.get('checkout');
+    const stripeSessionId = searchParams.get('session_id');
+
+    if (checkoutStatus === 'cancelled') {
+      toast.error('Payment cancelled. No ticket was created.');
+      router.replace(`/event/${id}`, { scroll: false });
+      return;
+    }
+
+    if (
+      checkoutStatus !== 'success' ||
+      !stripeSessionId ||
+      !user?.uid ||
+      !event?._id ||
+      checkoutFinalizedRef.current
+    ) {
+      return;
+    }
+
+    checkoutFinalizedRef.current = true;
+
+    async function finalizeTicketPurchase() {
+      try {
+        setIsBuying(true);
+        const res = await fetch('/api/tickets', {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify({
+            eventId: event._id,
+            userId: user.uid,
+            stripeSessionId,
+          }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.error(data.error || 'Payment verified, but ticket creation failed.');
+          return;
+        }
+
+        toast.success(data.alreadyProcessed ? 'Ticket already issued for this payment.' : 'Ticket purchased successfully!');
+        recordInteraction(user.uid, id, 'purchase');
+        await fetchEvent();
+      } catch (err) {
+        toast.error(err.message);
+      } finally {
+        setIsBuying(false);
+        router.replace(`/event/${id}`, { scroll: false });
+      }
+    }
+
+    finalizeTicketPurchase();
+  }, [user?.uid, event?._id, id, router, fetchEvent]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        {/* HERO SKELETON */}
+        <div className="p-4 md:p-8">
+          <div className="relative flex h-[500px] w-full items-end rounded-3xl overflow-hidden shadow-2xl">
+            <Skeleton className="absolute inset-0 rounded-3xl" />
+            <div className="relative z-10 w-full p-8">
+              <div className="mx-auto max-w-7xl space-y-4">
+                <Skeleton className="h-12 w-3/4" variant="rect" />
+                <div className="flex flex-wrap gap-4">
+                  <Skeleton className="h-10 w-32" variant="rect" />
+                  <Skeleton className="h-10 w-32" variant="rect" />
+                  <Skeleton className="h-10 w-32" variant="rect" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CONTENT GRID SKELETON */}
+        <div className="mx-auto max-w-7xl px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* ABOUT SKELETON */}
+          <div className="lg:col-span-2 rounded-3xl bg-white/10 backdrop-blur-md p-10 shadow-lg border border-white/10">
+            <Skeleton className="h-8 w-40 mb-6" variant="rect" />
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-full" variant="text" />
+              <Skeleton className="h-4 w-full" variant="text" />
+              <Skeleton className="h-4 w-3/4" variant="text" />
+            </div>
+          </div>
+
+          {/* TICKETS SKELETON */}
+          <div className="lg:col-span-1 lg:row-span-2 rounded-3xl border border-white/10 bg-white/10 p-8 shadow-xl backdrop-blur-md">
+            <Skeleton className="h-8 w-32 mx-auto mb-8" variant="rect" />
+            <div className="mb-8 text-center space-y-4">
+              <Skeleton className="h-10 w-24 mx-auto" variant="rect" />
+              <Skeleton className="h-6 w-32 mx-auto" variant="rect" />
+            </div>
+            <Skeleton className="h-12 w-full rounded-xl" variant="rect" />
+          </div>
+
+          {/* LOCATION SKELETON */}
+          <div className="lg:col-span-2 rounded-3xl bg-white/10 backdrop-blur-md p-8 shadow-lg border border-white/10">
+            <Skeleton className="h-8 w-40 mb-6" variant="rect" />
+            <Skeleton className="h-64 w-full rounded-2xl" variant="rect" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (error)   return <p className="p-6 text-red-500">{error}</p>;
   if (!event)  return <p className="p-6">No event found</p>;
 
@@ -136,7 +254,7 @@ function Event() {
   const now          = new Date();
   const isTimeValid  = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
   const isQuotaValid = eb?.enabled && typeof eb.maxTickets === 'number' && (eb.soldCount ?? 0) < eb.maxTickets;
-  const earlyBirdActive = eb?.enabled && (isTimeValid || isQuotaValid);
+  const earlyBirdActive = eb?.enabled && isTimeValid && isQuotaValid;
 
   return (
     <div className="min-h-screen">
@@ -223,14 +341,14 @@ function Event() {
 
           <button
             onClick={handleBuyTicket}
-            disabled={event.remainingTickets === 0}
+            disabled={event.remainingTickets === 0 || isBuying}
             className={`w-full rounded-xl py-4 px-6 text-lg font-semibold shadow-lg transition cursor-pointer
-              ${event.remainingTickets > 0
+              ${event.remainingTickets > 0 && !isBuying
                 ? 'bg-gradient-to-r from-[#FFA500] to-indigo-600 text-white'
                 : 'bg-white/10 text-white/50 cursor-not-allowed'
               }`}
           >
-            {event.remainingTickets > 0 ? 'Buy Tickets' : 'Sold Out'}
+            {event.remainingTickets === 0 ? 'Sold Out' : isBuying ? 'Preparing Checkout...' : 'Buy Tickets'}
           </button>
         </div>
 
@@ -262,7 +380,10 @@ function Event() {
       {/* BUYING OVERLAY */}
       {isBuying && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xl">
-          <div className="text-white text-xl animate-pulse">Processing Ticket...</div>
+          <div className="rounded-2xl border border-white/10 bg-gray-950/90 px-8 py-6 text-center shadow-2xl">
+            <div className="text-white text-xl font-semibold animate-pulse">Securing your ticket...</div>
+            <p className="mt-2 text-sm text-white/60">Keep this page open while payment and ticket issuance finish.</p>
+          </div>
         </div>
       )}
     </div>
