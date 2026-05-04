@@ -9,7 +9,7 @@ export async function POST(req) {
 
         
         await dbConnect();
-        const { event, date, time, location, latitude, longitude, category, price, totalTickets, image, organizerId, earlyBird } = await req.json();
+        const { event, date, time, location, latitude, longitude, category, price, totalTickets, image, organizerId, earlyBird, resaleCapEnabled, resaleCapPercent } = await req.json();
 
         const newEvent = await Event.create({
         event,
@@ -23,7 +23,11 @@ export async function POST(req) {
         totalTickets,
         remainingTickets: totalTickets,
         image,
-        organizerId,
+                organizerId,
+                resaleCapEnabled: !!resaleCapEnabled,
+                resaleCapPercent: Number.isFinite(Number(resaleCapPercent))
+                    ? Math.max(0, Math.min(1000, Number(resaleCapPercent)))
+                    : 0,
         approvalStatus: 'pending',
         submittedAt: new Date(),
         ...(earlyBird && typeof earlyBird === 'object' ? { earlyBird } : {})

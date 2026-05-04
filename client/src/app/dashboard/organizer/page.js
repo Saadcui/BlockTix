@@ -46,7 +46,8 @@ function OrganizerDashboard() {
   const [formData, setFormData] = useState({
     event: '', date: '', time: '', location: '', category: '',
     price: 0, totalTickets: 0, image: '',
-    ebEnabled: false, ebPrice: 0, ebEndDate: '', ebMaxTickets: 0
+    ebEnabled: false, ebPrice: 0, ebEndDate: '', ebMaxTickets: 0,
+    resaleCapEnabled: false, resaleCapPercent: 0
   });
 
   // --- STYLING CONSTANTS ---
@@ -204,7 +205,8 @@ function OrganizerDashboard() {
     setFormData({
       event: '', date: '', time: '', location: '', category: '',
       price: 0, totalTickets: 0, image: '',
-      ebEnabled: false, ebPrice: 0, ebEndDate: '', ebMaxTickets: 0
+      ebEnabled: false, ebPrice: 0, ebEndDate: '', ebMaxTickets: 0,
+      resaleCapEnabled: false, resaleCapPercent: 0
     });
     setCoordinates(null);
     setEditingEvent(null);
@@ -233,6 +235,8 @@ function OrganizerDashboard() {
         totalTickets: Number(formData.totalTickets),
         image: formData.image,
         organizerId: authUser.uid,
+        resaleCapEnabled: !!formData.resaleCapEnabled,
+        resaleCapPercent: Number(formData.resaleCapPercent || 0),
         earlyBird: formData.ebEnabled ? {
           enabled: true,
           discountPrice: Number(formData.ebPrice),
@@ -291,7 +295,9 @@ function OrganizerDashboard() {
       ebEnabled: Boolean(ev.earlyBird?.enabled),
       ebPrice: ev.earlyBird?.discountPrice || 0,
       ebEndDate: ev.earlyBird?.endDate ? new Date(ev.earlyBird.endDate).toISOString().slice(0, 10) : '',
-      ebMaxTickets: ev.earlyBird?.maxTickets || 0
+      ebMaxTickets: ev.earlyBird?.maxTickets || 0,
+      resaleCapEnabled: Boolean(ev.resaleCapEnabled),
+      resaleCapPercent: typeof ev.resaleCapPercent === 'number' ? ev.resaleCapPercent : 0
     });
     if (typeof ev.latitude === 'number' && typeof ev.longitude === 'number') {
       setCoordinates({ lat: ev.latitude, lng: ev.longitude });
@@ -706,6 +712,38 @@ function OrganizerDashboard() {
                           <input type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="https://..."
                             value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} />
                         </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="flex items-center gap-3">
+                          <input
+                            id="resaleCapCheck"
+                            type="checkbox"
+                            className="w-5 h-5 accent-[#FFA500] cursor-pointer shadow-sm"
+                            checked={formData.resaleCapEnabled}
+                            onChange={(e) => setFormData({ ...formData, resaleCapEnabled: e.target.checked })}
+                          />
+                          <label htmlFor="resaleCapCheck" className="text-sm font-semibold text-white">
+                            Enable resale price cap
+                          </label>
+                        </div>
+                        <p className="mt-2 text-xs text-white/60">
+                          Cap the maximum resale price as a percentage above the original ticket price.
+                        </p>
+                        {formData.resaleCapEnabled && (
+                          <div className="mt-4 max-w-xs">
+                            <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Max markup (%)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="1000"
+                              step="0.1"
+                              className={`${glassInput} w-full py-3 px-4`}
+                              value={formData.resaleCapPercent}
+                              onChange={(e) => setFormData({ ...formData, resaleCapPercent: e.target.value })}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 

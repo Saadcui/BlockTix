@@ -24,7 +24,7 @@ export async function GET(req) {
         const resaleTickets = await Ticket.find(query)
             .populate({
                 path: 'eventId',
-                select: 'event date time location price image organizerId category',
+                select: 'event date time location price image organizerId category resaleCapEnabled resaleCapPercent',
                 match: { deleted: { $ne: true } } // Exclude soft-deleted events
             })
             .sort({ createdAt: -1 });
