@@ -81,10 +81,21 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
+    if (Object.prototype.hasOwnProperty.call(updates, 'resaleCapPercent')) {
+      const parsed = Number(updates.resaleCapPercent);
+      updates.resaleCapPercent = Number.isFinite(parsed)
+        ? Math.max(0, Math.min(1000, parsed))
+        : 0;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'resaleCapEnabled')) {
+      updates.resaleCapEnabled = Boolean(updates.resaleCapEnabled);
+    }
+
     const allowedFields = new Set([
       'event', 'date', 'time', 'location', 'category', 'price',
       'totalTickets', 'remainingTickets', 'image', 'earlyBird',
-      'latitude', 'longitude'
+      'latitude', 'longitude', 'resaleCapEnabled', 'resaleCapPercent'
     ]);
 
     const safeUpdates = Object.fromEntries(

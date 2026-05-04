@@ -65,6 +65,16 @@ const eventSchema = new mongoose.Schema({
     maxTickets: { type: Number, min: 1 },
     soldCount: { type: Number, default: 0 }
   },
+  resaleCapEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  resaleCapPercent: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 1000,
+  },
     latitude: {
       type: Number,
     },

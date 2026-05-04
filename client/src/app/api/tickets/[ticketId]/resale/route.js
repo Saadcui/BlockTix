@@ -34,6 +34,20 @@ export async function POST(req, { params }) {
                 return NextResponse.json({ error: "Valid price is required" }, { status: 400 });
             }
 
+            const capEnabled = ticket.eventId?.resaleCapEnabled === true;
+            const capPercent = Number(ticket.eventId?.resaleCapPercent);
+            if (capEnabled && Number.isFinite(capPercent) && capPercent >= 0) {
+                const basePrice = Number(ticket.originalPurchasePrice ?? ticket.eventId?.price);
+                if (Number.isFinite(basePrice) && basePrice > 0) {
+                    const maxAllowed = basePrice * (1 + (capPercent / 100));
+                    if (price > maxAllowed + 0.01) {
+                        return NextResponse.json({
+                            error: `Resale price exceeds the organizer cap. Max allowed is Rs ${maxAllowed.toFixed(2)} (${capPercent}% above original).`
+                        }, { status: 400 });
+                    }
+                }
+            }
+
             // If ticket is claimed (not custodial / in user wallet), 
             // return it to platform custody so we can transfer it to the buyer later
             if (!ticket.custodial && ticket.tokenId) {

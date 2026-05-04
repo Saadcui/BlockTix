@@ -25,6 +25,8 @@ export default function Dashboard() {
   const [claiming,       setClaiming]       = useState(false);
   const [reselling,      setReselling]      = useState(false);
   const [delisting,      setDelisting]      = useState(false);
+  const [resalePriceInput, setResalePriceInput] = useState('');
+  const [resaleInputError, setResaleInputError] = useState('');
   const { user } = useAuth();
   const router   = useRouter();
 
@@ -49,12 +51,16 @@ export default function Dashboard() {
   const openTicketModal = useCallback((ticket) => {
     setSelectedTicket(ticket);
     setQrToken('');
+    setResalePriceInput('');
+    setResaleInputError('');
     setShowQrModal(true);
   }, []);
 
   const closeTicketModal = useCallback(() => {
     setShowQrModal(false);
     setQrToken('');
+    setResalePriceInput('');
+    setResaleInputError('');
   }, []);
 
   // Fetch tickets
@@ -204,17 +210,38 @@ export default function Dashboard() {
     finally { setReselling(false); }
   };
 
-  const promptForResalePrice = (ticketId) => {
-    const price = prompt('Enter resale price (Rs):');
-    const parsedPrice = parseFloat(price);
+  const getResaleCapDetails = (ticket) => {
+    const event = ticket?.eventId;
+    if (!event?.resaleCapEnabled) return null;
 
-    if (!price) return;
-    if (Number.isNaN(parsedPrice) || parsedPrice <= 0) {
-      toast.error('Please enter a valid price');
+    const capPercent = Number(event.resaleCapPercent);
+    const basePrice = Number(ticket?.originalPurchasePrice ?? event?.price);
+    if (!Number.isFinite(capPercent) || !Number.isFinite(basePrice) || basePrice <= 0) return null;
+
+    return {
+      capPercent,
+      basePrice,
+      maxPrice: basePrice * (1 + capPercent / 100)
+    };
+  };
+
+  const submitResalePrice = (ticket) => {
+    const parsedPrice = Number(resalePriceInput);
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      setResaleInputError('Enter a valid resale price.');
       return;
     }
 
-    handleResale(ticketId, parsedPrice);
+    const capDetails = getResaleCapDetails(ticket);
+    if (capDetails && parsedPrice > capDetails.maxPrice + 0.01) {
+      setResaleInputError(
+        `Max allowed is Rs ${capDetails.maxPrice.toFixed(2)} (${capDetails.capPercent}% cap).`
+      );
+      return;
+    }
+
+    setResaleInputError('');
+    handleResale(ticket.ticketId, parsedPrice);
   };
 
   const handleDelist = async (ticketId) => {
@@ -414,11 +441,12 @@ export default function Dashboard() {
     return <span className="rounded-full bg-green-500/15 px-3 py-1 text-xs font-semibold text-green-200">In wallet</span>;
   }
 
-  function TicketModal() {
+  const renderTicketModal = () => {
     const ticket = selectedTicket;
     const event = ticket?.eventId;
     if (!ticket || !event) return null;
     const isUsed = ticket?.status === 'used' || ticket?.isRedeemed === true;
+    const capDetails = getResaleCapDetails(ticket);
 
     const contractAddress = getContractAddress(ticket);
     const royaltyBps = typeof ticket.royaltyBps === 'number' ? ticket.royaltyBps : 0;
@@ -540,13 +568,36 @@ export default function Dashboard() {
                     </button>
                   )}
                   {!ticket.isForResale && (
-                    <button
-                      onClick={() => promptForResalePrice(ticket.ticketId)}
-                      disabled={reselling}
-                      className="w-full rounded-xl border border-[#FFA500]/30 bg-white/5 px-4 py-3 text-sm font-semibold text-[#FFA500] transition hover:bg-white/10 disabled:opacity-50"
-                    >
-                      {reselling ? 'Listing...' : 'List for Resale'}
-                    </button>
+                    <div className="space-y-3">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-white/60">Resale price (Rs)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={resalePriceInput}
+                        onChange={(e) => {
+                          setResalePriceInput(e.target.value);
+                          setResaleInputError('');
+                        }}
+                        placeholder="e.g. 2500"
+                        className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFA500]/50"
+                      />
+                      {capDetails && (
+                        <p className="text-xs text-white/60">
+                          Max allowed: Rs {capDetails.maxPrice.toFixed(2)} ({capDetails.capPercent}% cap)
+                        </p>
+                      )}
+                      {resaleInputError && (
+                        <p className="text-xs text-red-300">{resaleInputError}</p>
+                      )}
+                      <button
+                        onClick={() => submitResalePrice(ticket)}
+                        disabled={reselling}
+                        className="w-full rounded-xl border border-[#FFA500]/30 bg-white/5 px-4 py-3 text-sm font-semibold text-[#FFA500] transition hover:bg-white/10 disabled:opacity-50"
+                      >
+                        {reselling ? 'Listing...' : 'List for Resale'}
+                      </button>
+                    </div>
                   )}
                   {ticket.isForResale && (
                     <>
@@ -565,13 +616,36 @@ export default function Dashboard() {
                     This ticket is currently in your private wallet.
                   </div>
                   {!ticket.isForResale && (
-                    <button
-                      onClick={() => promptForResalePrice(ticket.ticketId)}
-                      disabled={reselling}
-                      className="w-full rounded-xl border border-[#FFA500]/30 bg-white/5 px-4 py-3 text-sm font-semibold text-[#FFA500] transition hover:bg-white/10 disabled:opacity-50"
-                    >
-                      {reselling ? 'Listing...' : 'List for Resale'}
-                    </button>
+                    <div className="space-y-3">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-white/60">Resale price (Rs)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={resalePriceInput}
+                        onChange={(e) => {
+                          setResalePriceInput(e.target.value);
+                          setResaleInputError('');
+                        }}
+                        placeholder="e.g. 2500"
+                        className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFA500]/50"
+                      />
+                      {capDetails && (
+                        <p className="text-xs text-white/60">
+                          Max allowed: Rs {capDetails.maxPrice.toFixed(2)} ({capDetails.capPercent}% cap)
+                        </p>
+                      )}
+                      {resaleInputError && (
+                        <p className="text-xs text-red-300">{resaleInputError}</p>
+                      )}
+                      <button
+                        onClick={() => submitResalePrice(ticket)}
+                        disabled={reselling}
+                        className="w-full rounded-xl border border-[#FFA500]/30 bg-white/5 px-4 py-3 text-sm font-semibold text-[#FFA500] transition hover:bg-white/10 disabled:opacity-50"
+                      >
+                        {reselling ? 'Listing...' : 'List for Resale'}
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -580,7 +654,7 @@ export default function Dashboard() {
         </div>
       </div>
     );
-  }
+  };
 
   // Render
   return (
@@ -772,7 +846,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {showQrModal && selectedTicket && <TicketModal />}
+        {showQrModal && selectedTicket && renderTicketModal()}
       </main>
     </ProtectedRoute>
   );
