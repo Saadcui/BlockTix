@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -62,9 +63,9 @@ function UserProfile() {
   const glassSidebar = "bg-white/5 backdrop-blur-lg border-r border-white/10";
   const glassContent = "bg-transparent";
   const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl";
-  const glassInput = "w-full p-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-[#FFA500]/60 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
-  const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition text-white font-medium backdrop-blur-sm shadow-sm";
-  const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-white rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
+  const glassInput = "w-full p-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-[#FFA500]/60 focus:bg-white/15 outline-none transition text-black placeholder-black/50";
+  const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition text-black font-medium backdrop-blur-sm shadow-sm";
+  const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-black rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
 
   useEffect(() => {
     if (!authUser?.uid) return;
@@ -359,7 +360,7 @@ function UserProfile() {
   };
 
   if (loading) return (
-    <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
+    <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm text-black">
       <div className="max-w-7xl mx-auto relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl flex flex-col md:flex-row min-h-[850px]">
         <aside className="w-full md:w-72 flex-shrink-0 flex flex-col p-6 border-r border-white/10">
           <Skeleton className="h-8 w-3/4 mb-8" />
@@ -390,7 +391,7 @@ function UserProfile() {
 
   return (
     <ProtectedRoute allowedRoles={['user', 'admin', 'organizer']}>
-      <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
+      <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm text-black">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FFA500]/20 blur-[100px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-pink-300/30 blur-[100px]"></div>
@@ -403,13 +404,13 @@ function UserProfile() {
           {showReauthModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
               <div className="bg-gray-900/80 p-6 rounded-2xl shadow-2xl max-w-md w-full m-4 border border-white/10">
-                <h3 className="text-xl font-bold text-white mb-2">Security Verification</h3>
-                <p className="text-white/70 mb-4 text-sm">Please confirm your password to proceed with sensitive changes.</p>
+                <h3 className="text-xl font-bold text-black mb-2">Security Verification</h3>
+                <p className="text-black/70 mb-4 text-sm">Please confirm your password to proceed with sensitive changes.</p>
                 <form onSubmit={handleReauthSubmit} className="space-y-4">
-                  <input type="password" placeholder="Current Password" value={reauthPassword} onChange={(e) => setReauthPassword(e.target.value)} className="w-full p-3 bg-white/10 border border-white/20 text-white placeholder-white/60 rounded-xl focus:ring-2 focus:ring-[#FFA500]/60 outline-none" autoFocus />
+                  <input type="password" placeholder="Current Password" value={reauthPassword} onChange={(e) => setReauthPassword(e.target.value)} className="w-full p-3 bg-white/10 border border-white/20 text-black placeholder-black/50 rounded-xl focus:ring-2 focus:ring-[#FFA500]/60 outline-none" autoFocus />
                   <div className="flex gap-3 justify-end">
-                    <button type="button" onClick={() => { setShowReauthModal(false); setPendingAction(null); }} className="px-4 py-2 text-white/70 hover:bg-white/10 rounded-lg">Cancel</button>
-                    <button type="submit" className="px-4 py-2 bg-[#FFA500] text-white rounded-lg hover:opacity-90">Verify</button>
+                    <button type="button" onClick={() => { setShowReauthModal(false); setPendingAction(null); }} className="px-4 py-2 text-black/70 hover:bg-white/10 rounded-lg">Cancel</button>
+                    <button type="submit" className="px-4 py-2 bg-[#FFA500] text-black rounded-lg hover:opacity-90">Verify</button>
                   </div>
                 </form>
               </div>
@@ -423,24 +424,24 @@ function UserProfile() {
                 <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FFA500] to-[#FFA500]">
                   Account
                 </h2>
-                <p className="text-xs text-white/60 font-medium tracking-wider uppercase mt-1">Settings & Privacy</p>
+                <p className="text-xs text-black/60 font-medium tracking-wider uppercase mt-1">Settings & Privacy</p>
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('profile')} className={'sm:w-full w-80 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
+                <button onClick={() => setActiveTab('profile')} className={'sm:w-full w-80 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-black/80 shadow-sm border border-white/10 break-words'}>
                   <UserIcon /> General Profile
                 </button>
 
                 {/* ── PREFERENCES TAB BUTTON (Fix 4) ── */}
-                <button onClick={() => setActiveTab('preferences')} className={'sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
+                <button onClick={() => setActiveTab('preferences')} className={'sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-black/80 shadow-sm border border-white/10 break-words'}>
                   <StarIcon /> Preferences
                 </button>
 
-                <button onClick={() => setActiveTab('security')} className={'sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words'}>
+                <button onClick={() => setActiveTab('security')} className={'sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-black/80 shadow-sm border border-white/10 break-words'}>
                   <LockIcon /> Security
                 </button>
 
-                <button onClick={() => router.push('/dashboard/user')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
+                <button onClick={() => router.push('/dashboard/user')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-black shadow-sm border border-white/20 hover:bg-white/30">
                   <TicketIcon /> My Tickets
                 </button>
 
@@ -448,7 +449,7 @@ function UserProfile() {
                   <TrashIcon /> Delete Account
                 </button>
             
-                <button onClick={async () => { await logout(); router.push('/login'); }} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-white shadow-sm border border-white/20 hover:bg-white/30">
+                <button onClick={async () => { await logout(); router.push('/login'); }} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 text-black shadow-sm border border-white/20 hover:bg-white/30">
                   <LogOutIcon /> Sign Out
                 </button>
 
@@ -479,32 +480,39 @@ function UserProfile() {
                   </div>
                   <div className="text-center md:text-left flex-1">
                     <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                      <h2 className="text-2xl font-bold text-white">{userData?.name}</h2>
+                      <h2 className="text-2xl font-bold text-black">{userData?.name}</h2>
                       <span className="inline-block px-3 py-1 bg-[#FFA500]/10 text-[#FFA500]/90 border border-[#FFA500]/20 rounded-full text-xs font-bold uppercase tracking-wider">
                         {userData?.role}
                       </span>
                     </div>
-                    <p className="text-white/60 text-sm mb-4">{userData?.email}</p>
+                    <p className="text-black/60 text-sm mb-4">{userData?.email}</p>
                     {!isEditingProfile && (
-                      <button onClick={() => setIsEditingProfile(true)} className={glassButton}>
-                        Edit Profile Details
-                      </button>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button onClick={() => setIsEditingProfile(true)} className={glassButton}>
+                          Edit Profile Details
+                        </button>
+                        {userData?.role === 'admin' && (
+                          <Link href="/dashboard/admin" className={glassButton + " no-underline text-sm"}>
+                            Admin Dashboard
+                          </Link>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
 
                 {isEditingProfile && (
                   <div className={`${glassCard} p-6 md:p-8 border-l-4 border-l-[#FFA500]`}>
-                    <h3 className="text-lg font-bold text-white mb-4">Edit Details</h3>
+                    <h3 className="text-lg font-bold text-black mb-4">Edit Details</h3>
                     <form onSubmit={handleUpdateProfile} className="space-y-6">
                       <div>
-                        <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Full Name</label>
+                        <label className="block text-xs font-semibold text-black/60 uppercase tracking-wider mb-2">Full Name</label>
                         <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className={glassInput} />
                       </div>
                       {(userData.role === 'organizer' || userData.role === 'admin') && (
                         <>
                           <div>
-                            <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Organizer Bio</label>
+                            <label className="block text-xs font-semibold text-black/60 uppercase tracking-wider mb-2">Organizer Bio</label>
                             <textarea
                               value={newBio}
                               onChange={(e) => setNewBio(e.target.value)}
@@ -515,7 +523,7 @@ function UserProfile() {
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Profile Picture URL</label>
+                            <label className="block text-xs font-semibold text-black/60 uppercase tracking-wider mb-2">Profile Picture URL</label>
                             <input
                               type="url"
                               value={newProfilePicture}
@@ -540,7 +548,7 @@ function UserProfile() {
                       <IdIcon />
                       <span className="font-semibold text-sm">Account ID</span>
                     </div>
-                    <p className="text-white/60 text-xs break-all font-mono bg-white/10 p-2 rounded-lg border border-white/10 select-all">
+                    <p className="text-black/60 text-xs break-all font-mono bg-white/10 p-2 rounded-lg border border-white/10 select-all">
                       {userData?._id || userData?.firebase_uid}
                     </p>
                   </div>
@@ -551,9 +559,9 @@ function UserProfile() {
                       <span className="font-semibold text-sm">Member Status</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <p className="text-sm text-white/70">Active Member</p>
+                      <p className="text-sm text-black/70">Active Member</p>
                       {userData?.createdAt && (
-                        <p className="text-xs text-white/50">Joined: {new Date(userData.createdAt).toLocaleDateString()}</p>
+                        <p className="text-xs text-black/50">Joined: {new Date(userData.createdAt).toLocaleDateString()}</p>
                       )}
                     </div>
                   </div>
@@ -567,15 +575,15 @@ function UserProfile() {
                 {showGeoPermissionPrompt && (
                   <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-md p-4">
                     <div className="bg-gray-900/80 p-6 rounded-2xl shadow-2xl max-w-md w-full m-4 border border-white/10">
-                      <h3 className="text-xl font-bold text-white mb-2">Enable location?</h3>
-                      <p className="text-white/70 text-sm mb-5">
+                      <h3 className="text-xl font-bold text-black mb-2">Enable location?</h3>
+                      <p className="text-black/70 text-sm mb-5">
                         Turn on location to automatically save your nearby area.
                       </p>
                       <div className="flex gap-3 justify-end">
                         <button
                           type="button"
                           onClick={() => setShowGeoPermissionPrompt(false)}
-                          className="px-4 py-2 text-white/70 hover:bg-white/10 rounded-lg border border-white/10"
+                          className="px-4 py-2 text-black/70 hover:bg-white/10 rounded-lg border border-white/10"
                         >
                           Not now
                         </button>
@@ -583,7 +591,7 @@ function UserProfile() {
                           type="button"
                           onClick={() => setCurrentLocation()}
                           disabled={geoLoading}
-                          className="px-4 py-2 bg-[#FFA500] text-white rounded-lg hover:opacity-90 disabled:opacity-70"
+                          className="px-4 py-2 bg-[#FFA500] text-black rounded-lg hover:opacity-90 disabled:opacity-70"
                         >
                           {geoLoading ? 'Detecting...' : 'Enable location'}
                         </button>
@@ -592,15 +600,15 @@ function UserProfile() {
                   </div>
                 )}
                 <div className={`${glassCard} p-6 md:p-8`}>
-                  <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-black mb-1 flex items-center gap-2">
                     <StarIcon /> Event Preferences
                   </h2>
-                  <p className="text-white/60 text-sm mb-6">
+                  <p className="text-black/60 text-sm mb-6">
                     Select the categories you enjoy and your city. We use these to personalise your event recommendations.
                   </p>
 
                   {/* Category grid */}
-                  <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">Favourite Categories</h3>
+                  <h3 className="text-xs font-semibold text-black/60 uppercase tracking-wider mb-3">Favourite Categories</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
                     {ALL_CATEGORIES.map(cat => {
                       const isSelected = selectedCategories.includes(cat);
@@ -610,9 +618,9 @@ function UserProfile() {
                           onClick={() => toggleCategory(cat)}
                           className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
                           style={{
-                            border     : isSelected ? '1.5px solid #FFA500' : '1px solid rgba(255,255,255,0.15)',
-                            background : isSelected ? 'rgba(255,165,0,0.18)' : 'rgba(255,255,255,0.06)',
-                            color      : isSelected ? '#FFA500' : 'rgba(255,255,255,0.75)',
+                            border     : isSelected ? '1.5px solid #FFA500' : '1px solid rgba(0,0,0,0.12)',
+                            background : isSelected ? 'rgba(255,165,0,0.18)' : 'rgba(255,255,255,0.4)',
+                            color      : isSelected ? '#FFA500' : 'rgba(0,0,0,0.75)',
                           }}
                         >
                           <span>{CAT_ICONS[cat]}</span>
@@ -624,7 +632,7 @@ function UserProfile() {
                   </div>
 
                   {/* City input */}
-                  <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">Your City</h3>
+                  <h3 className="text-xs font-semibold text-black/60 uppercase tracking-wider mb-3">Your City</h3>
                   <input
                     type="text"
                     placeholder="e.g., Lahore, Karachi, Islamabad"
@@ -633,11 +641,11 @@ function UserProfile() {
                     className={`${glassInput} mb-6`}
                   />
 
-                  <h3 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">
+                  <h3 className="text-xs font-semibold text-black/60 uppercase tracking-wider mb-3">
                   Location
                   </h3>
 
-                  <p className="text-xs text-white/50 mb-3">
+                  <p className="text-xs text-black/50 mb-3">
                     Search a place, click the map, or drag the marker. Use “My Location” to choose your current position.
                   </p>
 
@@ -672,7 +680,7 @@ function UserProfile() {
                   </button>
 
                   {selectedCategories.length > 0 && (
-                    <p className="mt-3 text-xs text-white/40">
+                    <p className="mt-3 text-xs text-black/40">
                       {selectedCategories.length} categor{selectedCategories.length === 1 ? 'y' : 'ies'} selected
                     </p>
                   )}
@@ -684,10 +692,10 @@ function UserProfile() {
             {activeTab === 'security' && (
               <div className="space-y-6 animate-fade-in">
                 <div className={`${glassCard} p-6 md:p-8`}>
-                  <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><LockIcon /> Login Credentials</h2>
+                  <h2 className="text-xl font-bold text-black mb-6 flex items-center gap-2"><LockIcon /> Login Credentials</h2>
 
                   <div className="mb-8">
-                    <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Update Email Address</label>
+                    <label className="block text-xs font-semibold text-black/60 uppercase tracking-wider mb-2">Update Email Address</label>
                     <form onSubmit={handleUpdateEmail} className="space-y-4">
                       <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className={glassInput} required />
                       <div className="flex justify-end">
@@ -697,7 +705,7 @@ function UserProfile() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Change Password</label>
+                    <label className="block text-xs font-semibold text-black/60 uppercase tracking-wider mb-2">Change Password</label>
                     <form onSubmit={handleUpdatePassword} className="space-y-4">
                       <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New Password (min 6 chars)" className={glassInput} minLength={6} />
                       <div className="flex justify-end">
@@ -714,11 +722,11 @@ function UserProfile() {
               <div className={`${glassCard} border-red-500/30 p-6 md:p-8 animate-fade-in relative overflow-hidden bg-red-500/10`}>
                 <div className="absolute top-0 left-0 w-full h-1 bg-red-500/70"></div>
                 <h2 className="text-xl font-bold text-red-300 mb-4">Danger Zone</h2>
-                <p className="text-white/70 mb-8 max-w-lg">
+                <p className="text-black/70 mb-8 max-w-lg">
                   Deleting your account is permanent. This action cannot be undone. All your data, including tickets and profile information, will be wiped immediately.
                 </p>
                 <div className="flex justify-end">
-                  <button onClick={handleDelete} className="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/30 transition font-medium">
+                  <button onClick={handleDelete} className="px-6 py-3 bg-red-500 text-black rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/30 transition font-medium">
                     Permanently Delete Account
                   </button>
                 </div>

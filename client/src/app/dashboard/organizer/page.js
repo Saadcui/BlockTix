@@ -55,10 +55,10 @@ function OrganizerDashboard() {
   const glassSidebar = "bg-white/5 backdrop-blur-lg border-r border-white/10";
   const glassContent = "bg-transparent";
   const glassCard = "bg-white/10 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl";
-  const glassInput = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white placeholder-white/60";
-  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-white [&>option]:bg-gray-900 [&>option]:text-white";
-  const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition text-white/80 font-medium backdrop-blur-sm shadow-sm";
-  const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-white rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
+  const glassInput = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-black placeholder-black/50";
+  const glassSelect = "w-full p-3 bg-white/10 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#FFA500]/50 focus:bg-white/15 outline-none transition text-black [&>option]:bg-white [&>option]:text-black";
+  const glassButton = "px-4 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition text-black/80 font-medium backdrop-blur-sm shadow-sm";
+  const primaryButton = "px-6 py-2.5 bg-[#FFA500] hover:opacity-90 text-black rounded-xl shadow-lg shadow-[#FFA500]/30 transition font-medium backdrop-blur-sm";
 
   // --- FETCH DATA ---
   const calculateAnalytics = React.useCallback((events) => {
@@ -336,7 +336,7 @@ function OrganizerDashboard() {
 
   return (
     <ProtectedRoute allowedRoles={['organizer', 'admin']}>
-      <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm">
+      <div className="min-h-screen relative p-4 md:p-8 font-sans overflow-hidden bg-white/10 backdrop-blur-sm text-black">
         {/* Background Blobs */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#FFA500]/20 blur-[100px]"></div>
@@ -353,20 +353,20 @@ function OrganizerDashboard() {
                 <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#FFA500] to-[#FFA500]">
                   Organizer
                 </h2>
-                <p className="text-xs text-white/60 font-medium tracking-wider uppercase mt-1">Dashboard</p>
+                <p className="text-xs text-black/60 font-medium tracking-wider uppercase mt-1">Dashboard</p>
               </div>
 
               <nav className="space-y-2">
-                <button onClick={() => setActiveTab('dashboard')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10 break-words">
+                <button onClick={() => setActiveTab('dashboard')} className="sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-black/80 shadow-sm border border-white/10 break-words">
                   <DashboardIcon /> Overview
                 </button>
-                <button onClick={() => setActiveTab('royalties')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('royalties')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-black/80 shadow-sm border border-white/10`}>
                   <DollarIcon /> Royalty Info
                 </button>
-                <button onClick={() => setActiveTab('events')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('events')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-black/80 shadow-sm border border-white/10`}>
                   <EventIcon /> My Events
                 </button>
-                <button onClick={() => setActiveTab('create')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-white/80 shadow-sm border border-white/10`}>
+                <button onClick={() => setActiveTab('create')} className={`sm:w-full w-full max-w-xs flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 bg-white/10 hover:bg-white/30 text-black/80 shadow-sm border border-white/10`}>
                   <PlusIcon /> Create Event
                 </button>
               </nav>
@@ -380,7 +380,7 @@ function OrganizerDashboard() {
             {activeTab === 'dashboard' && (
               <div className="space-y-8 animate-fade-in">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white">Performance Overview</h2>
+                  <h2 className="text-2xl font-bold text-black">Performance Overview</h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -389,7 +389,7 @@ function OrganizerDashboard() {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
                       <DollarIcon />
                     </div>
-                    <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
+                    <p className="text-black/60 text-sm font-medium uppercase tracking-wider mb-1">Total Revenue</p>
                       <h3 className="text-3xl font-bold text-[#FFA500]">Rs {analytics.totalRevenue.toLocaleString()}</h3>
                   </div>
 
@@ -398,7 +398,7 @@ function OrganizerDashboard() {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
                       <UsersIcon />
                     </div>
-                    <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Tickets Sold</p>
+                    <p className="text-black/60 text-sm font-medium uppercase tracking-wider mb-1">Tickets Sold</p>
                     <h3 className="text-3xl font-bold text-[#FFA500]">{analytics.totalTicketsSold}</h3>
                   </div>
 
@@ -407,7 +407,7 @@ function OrganizerDashboard() {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition transform group-hover:scale-110">
                       <EventIcon />
                     </div>
-                    <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">Active Events</p>
+                    <p className="text-black/60 text-sm font-medium uppercase tracking-wider mb-1">Active Events</p>
                       <h3 className="text-3xl font-bold text-[#FFA500]">{organizerEvents.length}</h3>
                   </div>
                 </div>
@@ -415,11 +415,11 @@ function OrganizerDashboard() {
                 {/* Recent List */}
                 <div className={`${glassCard} overflow-hidden`}>
                   <div className="px-6 py-4 border-b border-white/10">
-                    <h3 className="text-lg font-bold text-white">Recent Events</h3>
+                    <h3 className="text-lg font-bold text-black">Recent Events</h3>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-white/80">
-                      <thead className="bg-white/5 text-xs uppercase font-medium text-white/60">
+                    <table className="w-full text-left text-sm text-black/80">
+                      <thead className="bg-white/5 text-xs uppercase font-medium text-black/60">
                         <tr>
                           <th className="px-6 py-3">Event</th>
                           <th className="px-6 py-3">Date</th>
@@ -430,8 +430,8 @@ function OrganizerDashboard() {
                       <tbody className="divide-y divide-white/10">
                         {organizerEvents.slice(0, 5).map((ev) => (
                           <tr key={ev._id} className="hover:bg-white/5 transition-colors">
-                            <td className="px-6 py-4 font-medium text-white">{ev.event}</td>
-                            <td className="px-6 py-4 text-white/60">{new Date(ev.date).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 font-medium text-black">{ev.event}</td>
+                            <td className="px-6 py-4 text-black/60">{new Date(ev.date).toLocaleDateString()}</td>
                             <td className="px-6 py-4 text-center font-bold text-[#FFA500]">{ev.totalTickets - ev.remainingTickets}</td>
                             <td className="px-6 py-4 text-right">
                               {ev.remainingTickets === 0 ? (
@@ -444,7 +444,7 @@ function OrganizerDashboard() {
                         ))}
                       </tbody>
                     </table>
-                    {organizerEvents.length === 0 && <p className="text-center text-white/60 py-4">No events created yet.</p>}
+                    {organizerEvents.length === 0 && <p className="text-center text-black/60 py-4">No events created yet.</p>}
                   </div>
                 </div>
               </div>
@@ -454,17 +454,17 @@ function OrganizerDashboard() {
             {activeTab === 'royalties' && (
               <div className="space-y-8 animate-fade-in">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-white">Royalty Info</h2>
+                  <h2 className="text-2xl font-bold text-black">Royalty Info</h2>
                 </div>
 
                 {/* Royalty Settings (off-chain ledger) */}
                 <div className={`${glassCard} p-6`}>
-                  <h3 className="text-lg font-bold text-white mb-2">Royalty Settings</h3>
+                  <h3 className="text-lg font-bold text-black mb-2">Royalty Settings</h3>
                 
 
                   <div className="flex flex-col lg:flex-row lg:items-end gap-10 mb-4">
                     <div className="lg:col-span-2">
-                      <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-semibold text-black/60 uppercase tracking-wider mb-2">
                         Organizer Wallet Address
                       </label>
                       <input
@@ -486,7 +486,7 @@ function OrganizerDashboard() {
 
                   <div className="flex flex-col lg:flex-row lg:items-end gap-10">
                     <div className="lg:col-span-2">
-                      <label className="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">
+                      <label className="block text-xs font-semibold text-black/60 uppercase tracking-wider mb-2">
                         Default Royalty (max 10%)
                       </label>
                       <input
@@ -502,7 +502,7 @@ function OrganizerDashboard() {
                         }}
                         className={glassInput}
                       />
-                      <p className="mt-1 text-xs text-white/60">
+                      <p className="mt-1 text-xs text-black/60">
                         Saved as bps. Example: 5% = 500 bps.
                       </p>
                     </div>
@@ -516,25 +516,25 @@ function OrganizerDashboard() {
                     </button>
                   </div>
 
-                  <div className="mt-4 text-sm text-white/80">
+                  <div className="mt-4 text-sm text-black/80">
                     <span className="font-semibold">Unpaid Royalty Balance:</span> Rs {Number(royaltyBalance || 0).toFixed(2)}
                   </div>
                 </div>
 
                 {/* Royalty Earnings */}
                 <div className={`${glassCard} p-6`}>
-                  <h3 className="text-lg font-bold text-white mb-2">Royalty Earnings</h3>
-                  <p className="text-sm text-white/70 mb-4">
+                  <h3 className="text-lg font-bold text-black mb-2">Royalty Earnings</h3>
+                  <p className="text-sm text-black/70 mb-4">
                     Computed from resale history (off-chain). This helps you audit what you’ve earned.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                      <div className="text-xs text-white/60 font-semibold uppercase tracking-wider">Total Earned</div>
+                      <div className="text-xs text-black/60 font-semibold uppercase tracking-wider">Total Earned</div>
                       <div className="text-xl font-bold text-[#FFA500]">Rs {Number(royaltyReport.totalRoyaltyEarned || 0).toFixed(2)}</div>
                     </div>
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                      <div className="text-xs text-white/60 font-semibold uppercase tracking-wider">Resales</div>
+                      <div className="text-xs text-black/60 font-semibold uppercase tracking-wider">Resales</div>
                       <div className="text-xl font-bold text-[#FFA500]">{royaltyReport.resaleCount || 0}</div>
                     </div>
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10 flex items-end justify-end">
@@ -549,8 +549,8 @@ function OrganizerDashboard() {
                   </div>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-white/80">
-                      <thead className="bg-white/5 text-xs uppercase font-medium text-white/60">
+                    <table className="w-full text-left text-sm text-black/80">
+                      <thead className="bg-white/5 text-xs uppercase font-medium text-black/60">
                         <tr>
                           <th className="px-6 py-3">Event</th>
                           <th className="px-6 py-3">Date</th>
@@ -563,21 +563,21 @@ function OrganizerDashboard() {
                       <tbody className="divide-y divide-white/10">
                         {(royaltyReport.recent || []).map((row, idx) => (
                           <tr key={`${row.ticketId || 't'}-${idx}`} className="hover:bg-white/5 transition-colors">
-                            <td className="px-6 py-4 font-medium text-white">{row.event?.event || '—'}</td>
-                            <td className="px-6 py-4 text-white/60">
+                            <td className="px-6 py-4 font-medium text-black">{row.event?.event || '—'}</td>
+                            <td className="px-6 py-4 text-black/60">
                               {row.resale?.transactionDate ? new Date(row.resale.transactionDate).toLocaleString() : '—'}
                             </td>
                             <td className="px-6 py-4 text-right font-bold text-[#FFA500]">Rs {Number(row.resale?.royaltyAmount || 0).toFixed(2)}</td>
-                            <td className="px-6 py-4 text-right text-white/80">Rs {Number(row.resale?.resalePrice || 0).toFixed(2)}</td>
-                            <td className="px-6 py-4 text-white/70">{row.resale?.sellerId || '—'}</td>
-                            <td className="px-6 py-4 text-white/70">{row.resale?.buyerId || '—'}</td>
+                            <td className="px-6 py-4 text-right text-black/80">Rs {Number(row.resale?.resalePrice || 0).toFixed(2)}</td>
+                            <td className="px-6 py-4 text-black/70">{row.resale?.sellerId || '—'}</td>
+                            <td className="px-6 py-4 text-black/70">{row.resale?.buyerId || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
 
                     {(!royaltyReport.recent || royaltyReport.recent.length === 0) && (
-                      <p className="text-center text-white/60 py-4">
+                      <p className="text-center text-black/60 py-4">
                         {loadingRoyaltyReport ? 'Loading royalty history...' : 'No resale royalties recorded yet.'}
                       </p>
                     )}
@@ -590,7 +590,7 @@ function OrganizerDashboard() {
             {activeTab === 'events' && (
               <div className="space-y-6 animate-fade-in">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-white">My Events</h2>
+                  <h2 className="text-xl font-bold text-black">My Events</h2>
                   <button onClick={() => setActiveTab('create')} className={primaryButton}>+ Create New</button>
                 </div>
 
@@ -602,12 +602,12 @@ function OrganizerDashboard() {
                           {ev.image ? (
                             <Image src={ev.image} alt="" fill sizes="64px" className="object-cover" />
                           ) : (
-                            <div className="h-full w-full bg-white/5 flex items-center justify-center text-white/60"><EventIcon /></div>
+                            <div className="h-full w-full bg-white/5 flex items-center justify-center text-black/60"><EventIcon /></div>
                           )}
                         </div>
                         <div>
-                          <h4 className="font-bold text-white text-lg">{ev.event}</h4>
-                          <div className="flex gap-3 text-xs text-white/60 mt-1">
+                          <h4 className="font-bold text-black text-lg">{ev.event}</h4>
+                          <div className="flex gap-3 text-xs text-black/60 mt-1">
                             <span>{new Date(ev.date).toLocaleDateString()}</span>
                             <span>•</span>
                             <span>{ev.time}</span>
@@ -619,16 +619,16 @@ function OrganizerDashboard() {
 
                       <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                         <div className="text-right mr-4">
-                          <div className="text-xs text-white/60 uppercase">Stock</div>
-                          <div className="font-bold text-white/80">{ev.remainingTickets} / {ev.totalTickets}</div>
+                          <div className="text-xs text-black/60 uppercase">Stock</div>
+                          <div className="font-bold text-black/80">{ev.remainingTickets} / {ev.totalTickets}</div>
                         </div>
-                        <button onClick={() => startEditEvent(ev)} className="p-2 bg-white/10 hover:bg-white/20 text-white/80 rounded-xl transition border border-white/10">
+                        <button onClick={() => startEditEvent(ev)} className="p-2 bg-white/10 hover:bg-white/20 text-black/80 rounded-xl transition border border-white/10">
                           <EditIcon />
                         </button>
                       </div>
                     </div>
                   ))}
-                  {organizerEvents.length === 0 && <div className="text-center py-10 text-white/60">You have not created any events yet.</div>}
+                  {organizerEvents.length === 0 && <div className="text-center py-10 text-black/60">You have not created any events yet.</div>}
                 </div>
               </div>
             )}
@@ -638,7 +638,7 @@ function OrganizerDashboard() {
               <div className="animate-fade-in max-w-4xl mx-auto pb-10">
                 <div className={`${glassCard} p-6 md:p-10`}>
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-8 border-b border-white/10 pb-4">
-                    <h2 className="text-2xl font-bold text-white">{isEditing ? 'Edit Event' : 'Create New Event'}</h2>
+                    <h2 className="text-2xl font-bold text-black">{isEditing ? 'Edit Event' : 'Create New Event'}</h2>
                     {isEditing && (
                       <button type="button" onClick={resetEventForm} className={glassButton}>Cancel Edit</button>
                     )}
@@ -648,13 +648,13 @@ function OrganizerDashboard() {
                     {/* Top Section: Name and Category */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                       <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Event Name</label>
+                        <label className="block text-xs font-bold text-black/60 uppercase mb-2 ml-1">Event Name</label>
                         <input required type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="e.g. Summer Music Festival"
                           value={formData.event} onChange={e => setFormData({ ...formData, event: e.target.value })} />
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Category</label>
+                        <label className="block text-xs font-bold text-black/60 uppercase mb-2 ml-1">Category</label>
                         <select className={`${glassSelect} w-full py-3 px-4`} value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} required>
                           <option value="">Select Category</option>
                           {["Art", "Sports", "Food And Drink", "Education", "Festival", "Music", "Other"].map(c => (
@@ -666,13 +666,13 @@ function OrganizerDashboard() {
                       {/* Location Section - Full Width to prevent squashing */}
                       <div className="md:col-span-2 space-y-4">
                         <div>
-                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Location Address</label>
+                          <label className="block text-xs font-bold text-black/60 uppercase mb-2 ml-1">Location Address</label>
                           <input required type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="Enter physical address"
                             value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
                         </div>
 
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-sm backdrop-blur-md">
-                          <label className="block text-xs font-bold text-white/70 uppercase mb-3 text-center">Pinpoint Location</label>
+                          <label className="block text-xs font-bold text-black/70 uppercase mb-3 text-center">Pinpoint Location</label>
                           <div className="w-full rounded-xl overflow-hidden shadow-inner bg-white/5 min-h-[320px] flex justify-center border border-white/10">
                             <LocationPicker setCoordinates={setCoordinates} />
                           </div>
@@ -683,12 +683,12 @@ function OrganizerDashboard() {
                     {/* Date and Time - Side by Side */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2 px-2">
-                        <label className="block text-xs font-bold text-white/60 uppercase ml-1">Date</label>
+                        <label className="block text-xs font-bold text-black/60 uppercase ml-1">Date</label>
                         <input required type="date" className={`${glassInput} w-full py-3 px-4`}
                           value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
                       </div>
                       <div className="space-y-2 px-2">
-                        <label className="block text-xs font-bold text-white/60 uppercase ml-1">Time</label>
+                        <label className="block text-xs font-bold text-black/60 uppercase ml-1">Time</label>
                         <input required type="time" className={`${glassInput} w-full py-3 px-4`}
                           value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
                       </div>
@@ -698,17 +698,17 @@ function OrganizerDashboard() {
                     <div className="p-6 bg-white/5 rounded-2xl border border-white/10 shadow-sm space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className=" px-2">
-                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Price (Rs)</label>
+                          <label className="block text-xs font-bold text-black/60 uppercase mb-2 ml-1">Price (Rs)</label>
                           <input required type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
                             value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                         </div>
                         <div className=" px-2">
-                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Total Tickets</label>
+                          <label className="block text-xs font-bold text-black/60 uppercase mb-2 ml-1">Total Tickets</label>
                           <input required type="number" min="1" className={`${glassInput} w-full py-3 px-4`}
                             value={formData.totalTickets} onChange={e => setFormData({ ...formData, totalTickets: e.target.value })} />
                         </div>
                         <div className="px-2">
-                          <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Image URL</label>
+                          <label className="block text-xs font-bold text-black/60 uppercase mb-2 ml-1">Image URL</label>
                           <input type="text" className={`${glassInput} w-full py-3 px-4`} placeholder="https://..."
                             value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} />
                         </div>
@@ -723,16 +723,16 @@ function OrganizerDashboard() {
                             checked={formData.resaleCapEnabled}
                             onChange={(e) => setFormData({ ...formData, resaleCapEnabled: e.target.checked })}
                           />
-                          <label htmlFor="resaleCapCheck" className="text-sm font-semibold text-white">
+                          <label htmlFor="resaleCapCheck" className="text-sm font-semibold text-black">
                             Enable resale price cap
                           </label>
                         </div>
-                        <p className="mt-2 text-xs text-white/60">
+                        <p className="mt-2 text-xs text-black/60">
                           Cap the maximum resale price as a percentage above the original ticket price.
                         </p>
                         {formData.resaleCapEnabled && (
                           <div className="mt-4 max-w-xs">
-                            <label className="block text-xs font-bold text-white/60 uppercase mb-2 ml-1">Max markup (%)</label>
+                            <label className="block text-xs font-bold text-black/60 uppercase mb-2 ml-1">Max markup (%)</label>
                             <input
                               type="number"
                               min="0"
@@ -752,23 +752,23 @@ function OrganizerDashboard() {
                       <div className="flex items-center gap-3 mb-6">
                         <input type="checkbox" id="ebCheck" className="w-5 h-5 accent-[#FFA500] cursor-pointer shadow-sm"
                           checked={formData.ebEnabled} onChange={e => setFormData({ ...formData, ebEnabled: e.target.checked })} />
-                        <label htmlFor="ebCheck" className="font-bold text-white cursor-pointer select-none text-sm">Enable Early Bird Discount</label>
+                        <label htmlFor="ebCheck" className="font-bold text-black cursor-pointer select-none text-sm">Enable Early Bird Discount</label>
                       </div>
 
                       {formData.ebEnabled && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in pt-2">
                           <div className="space-y-2 px-2">
-                            <label className="block text-xs font-bold text-white/80 uppercase ml-1">Discount Price (Rs)</label>
+                            <label className="block text-xs font-bold text-black/80 uppercase ml-1">Discount Price (Rs)</label>
                             <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
                               value={formData.ebPrice} onChange={e => setFormData({ ...formData, ebPrice: e.target.value })} />
                           </div>
                           <div className="space-y-2 px-2">
-                            <label className="block text-xs font-bold text-white/80 uppercase ml-1">Offer Ends On</label>
+                            <label className="block text-xs font-bold text-black/80 uppercase ml-1">Offer Ends On</label>
                             <input type="date" className={`${glassInput} w-full py-3 px-4`}
                               value={formData.ebEndDate} onChange={e => setFormData({ ...formData, ebEndDate: e.target.value })} />
                           </div>
                           <div className="space-y-2 px-2">
-                            <label className="block text-xs font-bold text-white/80 uppercase ml-1">Max Discount Tickets</label>
+                            <label className="block text-xs font-bold text-black/80 uppercase ml-1">Max Discount Tickets</label>
                             <input type="number" min="0" className={`${glassInput} w-full py-3 px-4`}
                               value={formData.ebMaxTickets} onChange={e => setFormData({ ...formData, ebMaxTickets: e.target.value })} />
                           </div>
