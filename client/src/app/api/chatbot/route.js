@@ -32,10 +32,41 @@ const normalize = (value) => (value || '').toLowerCase();
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const unique = (items) => Array.from(new Set(items));
 
+function tokenizeForMatch(message) {
+  return extractKeywords(message);
+}
+
+function findBestFaqMatch(message) {
+  const queryTokens = tokenizeForMatch(message);
+  if (queryTokens.length === 0) return null;
+
+  const querySet = new Set(queryTokens);
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const item of kb?.faq || []) {
+    const questionTokens = tokenizeForMatch(item?.question);
+    const answerTokens = tokenizeForMatch(item?.answer);
+    const searchableTokens = new Set([...questionTokens, ...answerTokens]);
+    let score = 0;
+
+    for (const token of querySet) {
+      if (searchableTokens.has(token)) {
+        score += 1;
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = item;
+    }
+  }
+
+  return bestScore > 0 ? bestMatch : null;
+}
+
 function findFaqAnswer(message) {
-  const n = normalize(message);
-  const item = (kb?.faq || []).find((f) => normalize(f?.question).includes(n));
-  return item?.answer || null;
+  return findBestFaqMatch(message)?.answer || null;
 }
 
 const keywords = [
@@ -55,6 +86,13 @@ const keywords = [
 
 function detectKnowledge(message) {
   const lower = normalize(message);
+
+  const matchedFaqAnswer = findFaqAnswer(message);
+
+  if (matchedFaqAnswer) {
+    return matchedFaqAnswer;
+  }
+
   for (const item of keywords) {
     if (item.keywords.some((kw) => lower.includes(kw))) {
       return item.getReply();
