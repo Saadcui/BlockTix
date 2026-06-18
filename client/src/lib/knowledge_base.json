@@ -35,7 +35,7 @@
     "faq": [
         {
             "question": "Hi / Hello / Hey / Greetings / How are you",
-            "answer": "Hi! How can I help you today? You can ask me to find events (e.g., 'music events in Lahore') or ask questions about tickets, payments, QR codes, and your dashboard."
+            "answer": "Hi! How can I help you today? You can ask me to find events etc."
         },
         {
             "question": "Refund / Cancel / Cancellation",
