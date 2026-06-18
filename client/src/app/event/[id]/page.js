@@ -489,7 +489,7 @@ function Event() {
   const now          = new Date();
   const isTimeValid  = eb?.enabled && eb.endDate && now <= new Date(eb.endDate);
   const isQuotaValid = eb?.enabled && typeof eb.maxTickets === 'number' && (eb.soldCount ?? 0) < eb.maxTickets;
-  const earlyBirdActive = eb?.enabled && isTimeValid && isQuotaValid;
+  const earlyBirdActive = eb?.enabled && (isTimeValid || isQuotaValid);
 
   const organizerRatingLabel = organizer?.ratingsCount
     ? `${Number(organizer.averageRating || 0).toFixed(1)} / 5.0`
