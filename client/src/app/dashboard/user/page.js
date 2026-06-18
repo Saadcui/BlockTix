@@ -276,7 +276,7 @@ export default function Dashboard() {
       const eventExpired = t.eventId?.date && new Date(t.eventId.date) < now;
       return isScannedOrUsed || eventExpired;
     });
-    const spent = tickets.reduce((sum, t) => sum + (t.eventId?.price || 0), 0);
+    const spent = tickets.reduce((sum, t) => sum + (t.originalPurchasePrice || t.eventId?.price || 0), 0);
 
     return { upcoming, past, spent };
   }, [tickets]);
@@ -339,7 +339,7 @@ export default function Dashboard() {
             <strong>Date:</strong> {new Date(event.date).toLocaleDateString()}
           </p>
           <p className="text-white/70"><strong>Time:</strong> {event.time}</p>
-          <p className="text-[#FFA500] font-medium mt-2 text-sm">Price: Rs {event.price}</p>
+          <p className="text-[#FFA500] font-medium mt-2 text-sm">Price: Rs {ticket.originalPurchasePrice || event.price}</p>
           {ticket.isForResale && (
             <p className="text-[#FFA500] font-medium text-sm">Resale: Rs {ticket.resalePrice}</p>
           )}
