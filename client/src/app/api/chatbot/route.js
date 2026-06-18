@@ -226,6 +226,26 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: 'Message is required' }, { status: 400 });
     }
 
+    await dbConnect();
+
+    const category = detectCategory(trimmed);
+    const events = category
+      ? await findEventsByCategory(category)
+      : await findEventsByKeywords(trimmed);
+
+    if (events.length > 0) {
+      const result = events.map(buildEventCard);
+      const responseMessage = result.map((e, i) => `${i + 1}. ${e.formattedText}`).join('\n\n');
+
+      return NextResponse.json({
+        success: true,
+        count: result.length,
+        category: category || null,
+        message: responseMessage,
+        events: result,
+      });
+    }
+
     const kbAnswer = detectKnowledge(trimmed);
     if (kbAnswer) {
       return NextResponse.json({
@@ -237,32 +257,12 @@ export async function POST(req) {
       });
     }
 
-    await dbConnect();
-
-    const category = detectCategory(trimmed);
-    const events = category
-      ? await findEventsByCategory(category)
-      : await findEventsByKeywords(trimmed);
-
-    if (events.length === 0) {
-      return NextResponse.json({
-        success: true,
-        count: 0,
-        category: category || null,
-        events: [],
-        message: 'No Answer found for your query.',
-      });
-    }
-
-    const result = events.map(buildEventCard);
-    const responseMessage = result.map((e, i) => `${i + 1}. ${e.formattedText}`).join('\n\n');
-
     return NextResponse.json({
       success: true,
-      count: result.length,
+      count: 0,
       category: category || null,
-      message: responseMessage,
-      events: result,
+      events: [],
+      message: 'No Answer found for your query.',
     });
   } catch (error) {
     console.error('[Chatbot API] Error:', error);
